@@ -1,0 +1,56 @@
+.container {
+    border: 1px solid black;
+    border-top: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    .total{
+        display: inline-block;
+        margin: 5px auto;
+        padding: 10px;
+        font-size: 24px;
+        background-color: #e9ecef;
+        border-radius: 5px;
+        background-color: #4bffb5;
+        font-weight: bold;
+    }
+    .table {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr); // 8 equal columns
+        width: 100%;
+        padding: 10px;
+        padding-top: 0;
+        box-sizing: border-box;
+        .cell {
+            padding: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+        // Header styling
+        .header {
+            font-weight: bold;
+            background-color: gray;
+            color: white;
+        }
+        // Alternate row background color for readability
+        .cell:nth-child(16n + 9),
+        .cell:nth-child(16n + 10),
+        .cell:nth-child(16n + 11),
+        .cell:nth-child(16n + 12),
+        .cell:nth-child(16n + 13),
+        .cell:nth-child(16n + 14),
+        .cell:nth-child(16n + 15),
+        .cell:nth-child(16n + 16) {
+            background-color: #e9ecef;
+        }
+
+        .buy {
+            color: green;
+            font-weight: bold;
+        }
+        .sell {
+            color: red;
+            font-weight: bold;
+        }
+    }
+}

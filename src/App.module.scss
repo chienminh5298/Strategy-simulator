@@ -1,0 +1,289 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    overflow-x: scroll; /* Always show horizontal scrollbar */
+    .frameHeader {
+        border-bottom: black solid 1px;
+        padding: 5px 10px;
+        background-color: gray;
+        color: white;
+    }
+    .configAndChart {
+        display: flex;
+        align-items: stretch;
+        .config {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border: black solid 1px;
+
+            .content {
+                padding: 10px;
+                .token .row {
+                    .updateButton {
+                        padding: 2px 10px;
+                        background-color: rgb(235, 235, 235);
+                        border-radius: 2px;
+                        border: black solid 1px;
+                        cursor: pointer;
+                        &:active {
+                            transform: translate(1px, 1px);
+                        }
+                    }
+                }
+                .token .row,
+                .time {
+                    .dropdown {
+                        text-align: center;
+                        border-radius: 3px;
+                        outline: none;
+                        border: none;
+                        background-color: rgb(235, 235, 235);
+                        text-align: center;
+                        height: 23px;
+                    }
+                }
+                .token .row,
+                .time,
+                .investAmount {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 0px 10px;
+                    align-items: center;
+                    .amountInput {
+                        border-radius: 3px;
+                        outline: none;
+                        border: none;
+                        background-color: rgb(235, 235, 235);
+                        text-align: center;
+                        height: 23px;
+                    }
+                }
+                .token,
+                .time,
+                .investAmount,
+                .strategy,
+                .prevCandle {
+                    border-radius: 4px;
+                    overflow: hidden;
+                    background-color: gray;
+                    border: rgba(0, 0, 0, 0.173) solid 1px;
+                    &:not(:first-child) {
+                        margin-top: 10px;
+                    }
+                    header {
+                        padding: 10px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        color: white;
+                        .addStrategy {
+                            background-color: rgb(235, 235, 235);
+                            padding: 2px 10px;
+                            border-radius: 3px;
+                            border: black solid 1px;
+                            color: black;
+                            cursor: pointer;
+                            &:active {
+                                transform: translate(1px, 1px);
+                            }
+                        }
+                    }
+                    .side {
+                        display: flex;
+                        gap: 10px;
+                        justify-content: center;
+                        padding: 0 10px;
+                        .option {
+                            flex: 1;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            padding: 2px;
+                            border: 2px solid transparent;
+                            border-radius: 2px;
+                            cursor: pointer;
+                            font-weight: bold;
+                            transition: all 0.2s ease-in-out;
+                            position: relative;
+                            input {
+                                position: absolute;
+                                opacity: 0;
+                            }
+                            svg {
+                                margin-left: 5px;
+                            }
+                        }
+                        span {
+                            border: dashed 1px rgba(255, 255, 255, 0.321);
+                            color: rgba(0, 0, 0, 0.355);
+                            width: 100%;
+                            text-align: center;
+                            padding: 5px;
+                            border-radius: 3px;
+                            &:active {
+                                transform: translate(1px, 1px);
+                            }
+                        }
+                        // When SHORT is selected, change color
+                        .short input[type="radio"]:checked ~ span {
+                            background-color: #ff4976;
+                            border: none;
+                            color: black;
+                        }
+
+                        // When LONG is selected, change color
+                        .long input[type="radio"]:checked ~ span {
+                            background-color: #4bffb5;
+                            border: none;
+                            color: black;
+                        }
+                    }
+                    .stoplosses {
+                        padding: 10px;
+                        .stoploss {
+                            background-color: rgb(212, 212, 212);
+                            padding: 5px;
+                            border-radius: 3px;
+                            margin-top: 5px;
+                            border: black solid 1px;
+
+                            .grid {
+                                display: grid;
+                                grid-template-columns: 1fr 1fr 1fr;
+                                gap: 5px;
+                                align-items: center;
+
+                                .header {
+                                    font-weight: bold;
+                                    text-align: center;
+                                    padding: 5px;
+                                    background-color: rgb(200, 200, 200);
+                                    border-radius: 3px;
+                                }
+
+                                .col {
+                                    text-align: center;
+                                    input {
+                                        width: 100%;
+                                        border-radius: 3px;
+                                        outline: none;
+                                        border: none;
+                                        background-color: rgb(235, 235, 235);
+                                        text-align: center;
+                                    }
+                                }
+
+                                .delete {
+                                    display: flex;
+                                    justify-content: center;
+                                    align-items: center;
+
+                                    .deleteRow {
+                                        cursor: pointer;
+                                        &:active {
+                                            transform: translate(1px, 1px);
+                                        }
+                                    }
+                                }
+                            }
+
+                            .addRow {
+                                display: flex;
+                                justify-content: right;
+                                margin-top: 5px;
+
+                                span {
+                                    padding: 2px 10px;
+                                    background-color: rgb(235, 235, 235);
+                                    border-radius: 3px;
+                                    cursor: pointer;
+
+                                    &:active {
+                                        transform: translate(1px, 1px);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            footer {
+                display: flex;
+                justify-content: space-between;
+                padding: 0px 10px 10px 10px;
+
+                .needHelp,
+                .saveButton {
+                    border: black solid 1px;
+                    padding: 2px 10px;
+                    background-color: gray;
+                    color: white;
+                    border-radius: 3px;
+                    cursor: pointer;
+                    &:active {
+                        transform: translate(1px, 1px);
+                    }
+                }
+            }
+        }
+        .chart {
+            flex: 3.5;
+            display: flex;
+            flex-direction: column;
+            .frameHeader {
+                border: black solid 1px;
+                padding: 5px 10px;
+                background-color: gray;
+                color: white;
+            }
+            .chartContainer {
+                width: 100%;
+                height: 100%;
+            }
+        }
+    }
+    .board {
+        header {
+            display: flex;
+            gap: 5px;
+            .option {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid transparent;
+                border-radius: 1px;
+                cursor: pointer;
+                font-weight: bold;
+                transition: all 0.2s ease-in-out;
+                position: relative;
+                input {
+                    position: absolute;
+                    opacity: 0;
+                }
+                svg {
+                    margin-left: 5px;
+                }
+            }
+            span {
+                border: dashed 1px rgba(255, 255, 255, 0.321);
+                color: rgba(0, 0, 0, 0.355);
+            }
+            // When SHORT is selected, change color
+            input[type="radio"]:checked ~ span {
+                background-color: white;
+                border: none;
+                color: black;
+            }
+            span {
+                width: 100%;
+                text-align: center;
+                padding: 5px 10px;
+                &:active {
+                    transform: translate(1px, 1px);
+                }
+            }
+        }
+    }
+}
