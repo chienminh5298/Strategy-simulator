@@ -12,6 +12,10 @@
     .configAndChart {
         display: flex;
         align-items: stretch;
+        .errorForm {
+            border: solid 2px #ff4976 !important;
+            box-shadow: 0px 0px 20px 0px #ff4976;
+        }
         .config {
             flex: 1;
             display: flex;

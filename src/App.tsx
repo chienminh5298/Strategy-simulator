@@ -4,6 +4,8 @@ import Chart from "./chart";
 
 import HistoryTab from "@src/component/tab/history";
 import Config from "@src/component/config";
+import { Bounce, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"; // Import default styles
 
 const App = () => {
     const [chartData, setChartData] = useState();
@@ -12,6 +14,7 @@ const App = () => {
 
     return (
         <div className={styles.wrapper}>
+            <ToastContainer position="top-center" autoClose={false} newestOnTop={false} closeOnClick={false} rtl={false} pauseOnFocusLoss draggable={false} theme="light" transition={Bounce} />
             <div className={styles.configAndChart}>
                 <Config />
                 <div className={styles.chart}>

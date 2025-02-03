@@ -16,7 +16,6 @@
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "axios": "^1.5.1",
-    "googleapis": "^144.0.0",
     "lightweight-charts": "^4.2.0",
     "react": "^18.2.0",
     "react-currency-input-field": "^3.8.0",
