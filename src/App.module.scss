@@ -2,7 +2,41 @@
     display: flex;
     flex-direction: column;
     padding: 10px;
-    overflow-x: scroll; /* Always show horizontal scrollbar */
+    position: relative;
+    .loading {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 20;
+        background-color: rgba(0, 0, 0, 0.612);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow-y: hidden;
+        .content {
+            display: flex;
+            gap: 10px;
+            background-color: white;
+            padding: 10px 20px;
+            border-radius: 3px;
+            font-size: 20px;
+            align-items: center;
+            .loadingIcon {
+                animation: spin 2s linear infinite;
+            }
+
+            @keyframes spin {
+                from {
+                    transform: rotate(0deg);
+                }
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+        }
+    }
     .frameHeader {
         border-bottom: black solid 1px;
         padding: 5px 10px;

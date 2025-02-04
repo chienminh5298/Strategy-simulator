@@ -50,7 +50,7 @@ const Chart = ({ data, setIsFetchData, duration }: ChartPropType) => {
     // const dispatch = useDispatch();
 
     const chartContainerRef = useRef<HTMLDivElement>(null);
-    console.log(chartContainerRef.current?.clientHeight);
+
     useEffect(() => {
         const price_data = data ? data : {};
         if (!chartContainerRef.current) {

@@ -1,13 +1,27 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialState = {
-    // BTC: { 2025: [{}], 2024: [{}] }
+export type dataType = {
+    [token: string]: {
+        [year: number]: {
+            Date: string;
+            Open: number;
+            High: number;
+            Low: number;
+            Close: number;
+            Volume: number;
+        }[];
+    };
 };
+const initialState: dataType = {};
 
 const dataSlice = createSlice({
     name: "data",
     initialState: initialState,
-    reducers: {},
+    reducers: {
+        fetchData(state, payload) {
+            Object.assign(state, payload.payload);
+        },
+    },
 });
 
 export const dataActions = dataSlice.actions;

@@ -1,9 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit";
-import configReducer from "./configReducer";
+import dataReducer from "@src/redux/dataReducer";
 
 const store = configureStore({
     reducer: {
-        config: configReducer, // Add reducers here
+        // config: configReducer, // Add reducers here
+        data: dataReducer, // Add reducers here
     },
 });
 

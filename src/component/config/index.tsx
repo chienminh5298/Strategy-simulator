@@ -4,20 +4,85 @@ import { faTrashCan } from "@fortawesome/free-regular-svg-icons";
 import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons";
 import CurrencyInput from "react-currency-input-field";
 import styles from "@src/App.module.scss";
-import { useSelector } from "react-redux";
-import { RootState } from "@root/src/redux/store";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
-import { configActions } from "@src/redux/configReducer";
 import { errorMessage } from "@src/component/config/errorMessage";
+import { useSelector } from "react-redux";
+import { RootState } from "@src/redux/store";
+
+type configType = {
+    token: string;
+    year: string;
+    value: number;
+    prevCandle: "red" | "green";
+    strategy: {
+        side: "long" | "short";
+        stoplosses: {
+            target: number;
+            percent: number;
+        }[];
+    };
+    triggerStrategy: {
+        side: "long" | "short";
+        stoplosses: {
+            target: number;
+            percent: number;
+        }[];
+    };
+};
 
 const Config = () => {
     const [dataUpToDate, setDataUpToDate] = useState(false);
-    const configQuery = useSelector((state: RootState) => state.config.form);
-    const configError = useSelector((state: RootState) => state.config.formError);
-    const configTrigger = useSelector((state: RootState) => state.config.isTrigger);
-    const [config, setConfig] = useState(configQuery);
-    const dispatch = useDispatch();
+    const [configError, setConfigError] = useState<undefined | "token" | "year" | "value" | "strategy" | "triggerStrategy">(undefined);
+    const tokenData = useSelector((state: RootState) => state.data);
+    const [isTrigger, setIsTrigger] = useState<boolean>(true);
+    const [config, setConfig] = useState<configType>({
+        token: "",
+        year: "",
+        value: 500,
+        prevCandle: "red",
+        strategy: {
+            side: "long",
+            stoplosses: [
+                {
+                    target: 0,
+                    percent: -2,
+                },
+                {
+                    target: 0.7,
+                    percent: 0.7,
+                },
+            ],
+        },
+        triggerStrategy: {
+            side: "short",
+            stoplosses: [
+                {
+                    target: 0,
+                    percent: -2,
+                },
+                {
+                    target: 0.7,
+                    percent: 0.7,
+                },
+            ],
+        },
+    });
+
+    let renderTokens = Object.keys(tokenData).map((token, idx) => (
+        <option key={idx} value={token}>
+            {token}
+        </option>
+    ));
+
+    let renderYear;
+    if (config.token !== "") {
+        renderYear = Object.keys(tokenData[config.token]).map((year, idx) => (
+            <option key={idx} value={year}>
+                {year}
+            </option>
+        ));
+    }
 
     let renderStrategyStoplosses = config.strategy.stoplosses.map((sl, idx) => {
         return (
@@ -26,10 +91,10 @@ const Config = () => {
                     <FontAwesomeIcon icon={faTrashCan} className={styles.deleteRow} onClick={() => handleDeleteTarget("strategy", idx)} />
                 </div>
                 <div className={styles.col}>
-                    <input type="number" defaultValue={sl.target} disabled={idx === 0} />
+                    <input type="number" defaultValue={sl.target} disabled={idx === 0} step={0.1} onChange={(e) => handleTargetPercent("strategy", idx, "target", parseFloat(e.target.value))} />
                 </div>
                 <div className={styles.col}>
-                    <input type="number" defaultValue={sl.percent} />
+                    <input type="number" defaultValue={sl.percent} step={0.1} onChange={(e) => handleTargetPercent("strategy", idx, "percent", parseFloat(e.target.value))} />
                 </div>
             </Fragment>
         );
@@ -42,14 +107,29 @@ const Config = () => {
                     <FontAwesomeIcon icon={faTrashCan} className={styles.deleteRow} onClick={() => handleDeleteTarget("triggerStrategy", idx)} />
                 </div>
                 <div className={styles.col}>
-                    <input type="number" defaultValue={sl.target} disabled={idx === 0} />
+                    <input type="number" defaultValue={sl.target} disabled={idx === 0} step={0.1} onChange={(e) => handleTargetPercent("triggerStrategy", idx, "target", parseFloat(e.target.value))} />
                 </div>
                 <div className={styles.col}>
-                    <input type="number" defaultValue={sl.percent} step={0.1} />
+                    <input type="number" defaultValue={sl.percent} step={0.1} onChange={(e) => handleTargetPercent("triggerStrategy", idx, "percent", parseFloat(e.target.value))} />
                 </div>
             </Fragment>
         );
     });
+
+    // handle on change input target & percent
+    const handleTargetPercent = (type: "strategy" | "triggerStrategy", idx: number, inputType: "target" | "percent", value: number) => {
+        setConfig((prevConfig) => {
+            if (!prevConfig[type] || !prevConfig[type].stoplosses) return prevConfig; // Ensure safety
+
+            return {
+                ...prevConfig,
+                [type]: {
+                    ...prevConfig[type],
+                    stoplosses: prevConfig[type].stoplosses.map((sl, i) => (i === idx ? { ...sl, [inputType]: value } : sl)),
+                },
+            };
+        });
+    };
 
     useEffect(() => {
         const checkDataUpToDate = async () => {
@@ -93,6 +173,7 @@ const Config = () => {
                 },
             }));
         }
+        setConfigError(undefined);
     };
 
     // Handle delete target
@@ -119,10 +200,14 @@ const Config = () => {
     };
 
     // Handle submit
-
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        dispatch(configActions.applyConfig(config));
+        const checkCf = checkConfig(config, isTrigger);
+        if (checkCf === undefined) {
+            setConfig(config);
+        } else {
+            setConfigError(checkCf);
+        }
     };
 
     return (
@@ -135,25 +220,24 @@ const Config = () => {
                         <select
                             className={styles.dropdown}
                             value={config.token} // Correctly controlled component
-                            onChange={(e) =>
+                            onChange={(e) => {
                                 setConfig((prevConfig) => ({
                                     ...prevConfig,
                                     token: e.target.value,
-                                }))
-                            }
+                                }));
+                                setConfigError(undefined);
+                            }}
                             name="token"
                         >
                             <option value="" disabled>
                                 Select token
                             </option>
-                            <option value="BTC">BTC</option>
-                            <option value="ETH">ETH</option>
-                            <option value="SOL">SOL</option>
+                            {renderTokens}
                         </select>
                     </div>
                     {config.token !== "" && (
                         <div className={styles.row}>
-                            <header>Token updated to: 12-22-2025</header>
+                            <header>Token updated to: {}</header>
                             <button onClick={handleUpdateData} className={styles.updateButton} disabled={dataUpToDate}>
                                 Update data
                             </button>
@@ -166,19 +250,18 @@ const Config = () => {
                         className={styles.dropdown}
                         name="year"
                         value={config.year}
-                        onChange={(e) =>
+                        onChange={(e) => {
                             setConfig((prevConfig) => ({
                                 ...prevConfig,
                                 year: e.target.value,
-                            }))
-                        }
+                            }));
+                            setConfigError(undefined);
+                        }}
                     >
                         <option value="" disabled>
                             Select time range
                         </option>
-                        <option value="2021">2021</option>
-                        <option value="2022">2022</option>
-                        <option value="2023">2023</option>
+                        {renderYear}
                     </select>
                 </div>
                 <div className={`${styles.investAmount} ${configError === "value" && styles.errorForm}`}>
@@ -193,26 +276,27 @@ const Config = () => {
                         intlConfig={{ locale: "en-US", currency: "USD" }}
                         allowNegativeValue={false}
                         className={styles.amountInput}
-                        onValueChange={(value) =>
+                        onValueChange={(value) => {
                             setConfig((prevConfig) => ({
                                 ...prevConfig,
                                 value: value === undefined ? 0 : parseInt(value),
-                            }))
-                        }
+                            }));
+                            setConfigError(undefined);
+                        }}
                     />
                 </div>
                 <div className={styles.prevCandle}>
                     <header>Previous candle is:</header>
                     <div className={styles.side}>
                         <label className={`${styles.option} ${styles.short}`}>
-                            <input type="radio" name="prevCandle" value="short" defaultChecked onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, strategy: { stoplosses: [...prevConfig.strategy.stoplosses], side: e.target.value } }))} />
+                            <input type="radio" name="prevCandle" value="short" defaultChecked onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, prevCandle: "red" }))} />
                             <span>
                                 RED <FontAwesomeIcon icon={faArrowDown} />
                             </span>
                         </label>
 
                         <label className={`${styles.option} ${styles.long}`}>
-                            <input type="radio" name="prevCandle" value="long" />
+                            <input type="radio" name="prevCandle" value="long" onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, prevCandle: "green" }))} />
                             <span>
                                 GREEN <FontAwesomeIcon icon={faArrowUp} />
                             </span>
@@ -222,22 +306,22 @@ const Config = () => {
                 <div className={`${styles.strategy} ${configError === "strategy" && styles.errorForm}`}>
                     <header>
                         <div>Strategy</div>
-                        {!configTrigger && (
-                            <div className={styles.addStrategy} onClick={() => dispatch(configActions.setTrigger(true))}>
+                        {!isTrigger && (
+                            <div className={styles.addStrategy} onClick={() => setIsTrigger(true)}>
                                 Add trigger
                             </div>
                         )}
                     </header>
                     <div className={styles.side}>
                         <label className={`${styles.option} ${styles.short}`}>
-                            <input type="radio" name="side" value="short" defaultChecked={config.strategy.side === "short"} />
+                            <input type="radio" name="side" value="short" defaultChecked={config.strategy.side === "short"} onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, strategy: { stoplosses: [...prevConfig.strategy.stoplosses], side: e.target.value as "short" } }))} />
                             <span>
                                 SHORT <FontAwesomeIcon icon={faArrowDown} />
                             </span>
                         </label>
 
                         <label className={`${styles.option} ${styles.long}`}>
-                            <input type="radio" name="side" value="long" defaultChecked={config.strategy.side === "long"} />
+                            <input type="radio" name="side" value="long" defaultChecked={config.strategy.side === "long"} onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, strategy: { stoplosses: [...prevConfig.strategy.stoplosses], side: e.target.value as "long" } }))} />
                             <span>
                                 LONG <FontAwesomeIcon icon={faArrowUp} />
                             </span>
@@ -259,24 +343,24 @@ const Config = () => {
                         </div>
                     </div>
                 </div>
-                {configTrigger && (
-                    <div className={`${styles.strategy} ${configTrigger && styles.show} ${configError === "triggerStrategy" && styles.errorForm}`}>
+                {isTrigger && (
+                    <div className={`${styles.strategy} ${isTrigger && styles.show} ${configError === "triggerStrategy" && styles.errorForm}`}>
                         <header>
                             <div>Trigger Strategy</div>
-                            <div className={styles.addStrategy} onClick={() => dispatch(configActions.setTrigger(false))}>
+                            <div className={styles.addStrategy} onClick={() => setIsTrigger(false)}>
                                 Delete <FontAwesomeIcon icon={faTrashCan} />
                             </div>
                         </header>
                         <div className={styles.side}>
                             <label className={`${styles.option} ${styles.short}`}>
-                                <input type="radio" name="triggerSide" value="short" defaultChecked onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, triggerStrategy: { stoplosses: [...prevConfig.triggerStrategy.stoplosses], side: e.target.value } }))} />
+                                <input type="radio" name="triggerSide" value="short" defaultChecked onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, triggerStrategy: { stoplosses: [...prevConfig.triggerStrategy.stoplosses], side: e.target.value as "short" } }))} />
                                 <span>
                                     SHORT <FontAwesomeIcon icon={faArrowDown} />
                                 </span>
                             </label>
 
                             <label className={`${styles.option} ${styles.long}`}>
-                                <input type="radio" name="triggerSide" value="long" />
+                                <input type="radio" name="triggerSide" value="long" onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, triggerStrategy: { stoplosses: [...prevConfig.triggerStrategy.stoplosses], side: e.target.value as "long" } }))} />
                                 <span>
                                     LONG <FontAwesomeIcon icon={faArrowUp} />
                                 </span>
@@ -311,3 +395,54 @@ const Config = () => {
 };
 
 export default Config;
+
+const checkConfig = (config: configType, isTrigger: boolean) => {
+    if (config.token === "") return "token";
+    if (config.year === "") return "year";
+    if (config.value < 500) return "value";
+    // Check strategy
+    const checkStrategy = checkStrategyFn(config.strategy.stoplosses);
+    if (checkStrategy !== undefined) return checkStrategy;
+    // Check trigger strategy
+    if (isTrigger) {
+        const checkTriggerStrategy = checkStrategyFn(config.triggerStrategy.stoplosses);
+        if (checkTriggerStrategy !== undefined) return "triggerStrategy";
+    }
+};
+
+const checkStrategyFn = (
+    stoplosses: {
+        target: number;
+        percent: number;
+    }[]
+) => {
+    // Check strategy has at lease 2 stoplosses
+    if (stoplosses.length < 2) return "strategy";
+    // Check each stoploss
+    // Check for duplicate target values
+    const targetSet = new Set<number>();
+    for (const stoploss of stoplosses) {
+        if (targetSet.has(stoploss.target)) return "strategy"; // Duplicate target found
+        targetSet.add(stoploss.target);
+
+        // Check if percent is greater than target
+        if (stoploss.percent > stoploss.target) return "strategy";
+    }
+    // Check first stoploss target === 0
+    if (stoplosses[0].target !== 0) return "strategy";
+    // Check last stoploss percent should === target to close order
+    const lastStoploss = stoplosses[stoplosses.length - 1];
+    if (lastStoploss.percent !== lastStoploss.target) return "strategy";
+};
+
+const checkDate = (date: Date) => {
+    const today = new Date();
+    return date.getDate() + 1 === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+};
+
+const getLastDate = () => {
+    const lastYear = Object.keys(tokenData[config.token]).pop();
+    if (lastYear) {
+        console.log(tokenData[config.token][parseInt(lastYear)][tokenData[config.token][parseInt(lastYear)].length - 1]);
+    }
+};
