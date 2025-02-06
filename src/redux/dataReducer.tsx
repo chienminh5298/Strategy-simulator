@@ -1,15 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+export type candleType = {
+    Date: string;
+    Open: number;
+    High: number;
+    Low: number;
+    Close: number;
+    Volume: number;
+};
 export type dataType = {
     [token: string]: {
-        [year: number]: {
-            Date: string;
-            Open: number;
-            High: number;
-            Low: number;
-            Close: number;
-            Volume: number;
-        }[];
+        [year: number]: candleType[];
     };
 };
 const initialState: dataType = {};
@@ -20,6 +21,11 @@ const dataSlice = createSlice({
     reducers: {
         fetchData(state, payload) {
             Object.assign(state, payload.payload);
+        },
+        updateData(state, payload) {
+            const data = payload.payload;
+            const token = data.token;
+            state[token] = data.data.data;
         },
     },
 });

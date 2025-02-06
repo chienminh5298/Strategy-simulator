@@ -1,16 +1,21 @@
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Dispatch, Fragment, SetStateAction, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashCan } from "@fortawesome/free-regular-svg-icons";
 import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons";
 import CurrencyInput from "react-currency-input-field";
 import styles from "@src/App.module.scss";
 import { toast } from "react-toastify";
-import { useDispatch } from "react-redux";
 import { errorMessage } from "@src/component/config/errorMessage";
 import { useSelector } from "react-redux";
 import { RootState } from "@src/redux/store";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchOneTokenData, mutationUpdateData } from "@src/http";
+import { convertToUTCDateTime } from "@src/utils";
+import { useDispatch } from "react-redux";
+import { dataActions } from "@src/redux/dataReducer";
+import { configActions } from "@src/redux/configReducer";
 
-type configType = {
+export type configType = {
     token: string;
     year: string;
     value: number;
@@ -31,7 +36,13 @@ type configType = {
     };
 };
 
-const Config = () => {
+type ConfigProps = {
+    setIsFetchData: Dispatch<SetStateAction<boolean>>;
+};
+
+const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
+    const dispatch = useDispatch();
+    const queryClient = useQueryClient();
     const [dataUpToDate, setDataUpToDate] = useState(false);
     const [configError, setConfigError] = useState<undefined | "token" | "year" | "value" | "strategy" | "triggerStrategy">(undefined);
     const tokenData = useSelector((state: RootState) => state.data);
@@ -132,18 +143,6 @@ const Config = () => {
     };
 
     useEffect(() => {
-        const checkDataUpToDate = async () => {
-            if (config.token) {
-                // const lastDate = await readTheLastDay(tokenSelected);
-                // console.log(lastDate);
-                // Check if data up to date
-            }
-        };
-
-        checkDataUpToDate();
-    }, [config.token]);
-
-    useEffect(() => {
         if (configError) {
             toast.error(errorMessage(configError));
         }
@@ -152,7 +151,41 @@ const Config = () => {
     // Handle update token data
     const handleUpdateData = (e: any) => {
         e.preventDefault();
+        mutate();
     };
+
+    const { data, refetch } = useQuery({
+        queryKey: ["dataSOL"],
+        queryFn: () => fetchOneTokenData(config.token),
+        enabled: false, // Disable auto-fetch
+    });
+
+    useEffect(() => {
+        if (data) {
+            dispatch(dataActions.updateData({ token: config.token, data: data }));
+        }
+    }, [data, dispatch]);
+
+    const { mutate } = useMutation({
+        mutationFn: () => mutationUpdateData(config.token, getLastDate(tokenData[config.token])),
+        onMutate: () => {
+            // When the mutation starts, set fetching to true
+            setIsFetchData(true);
+        },
+        onError: () => {
+            // If an error occurs, stop fetching
+            setIsFetchData(false);
+            toast.error("Can not fetching new data.");
+        },
+        onSuccess: (res) => {
+            // Ensure fetch state resets properly
+            queryClient.invalidateQueries({ queryKey: ["dataSOL"] });
+            refetch();
+            setIsFetchData(false);
+            toast.success("Data fetched successfully.");
+            setDataUpToDate(true);
+        },
+    });
 
     // Handle add target
     const handleAddTarget = (type: "strategy" | "triggerStrategy") => {
@@ -205,10 +238,28 @@ const Config = () => {
         const checkCf = checkConfig(config, isTrigger);
         if (checkCf === undefined) {
             setConfig(config);
+            dispatch(configActions.updateConfig(false));
+            toast.success("Apply config successfully. You can run backtest now.");
         } else {
             setConfigError(checkCf);
+            dispatch(configActions.updateConfig(true));
         }
     };
+
+    // Handle select token
+    const handleSelectToken = (e: any) => {
+        setConfig((prevConfig) => ({
+            ...prevConfig,
+            token: e.target.value,
+        }));
+        setConfigError(undefined);
+        setDataUpToDate(false);
+        if (checkDate(new Date(getLastDate(tokenData[e.target.value])))) {
+            setDataUpToDate(true);
+        }
+    };
+
+    let renderDataUpToDate = config.token === "" ? <Fragment></Fragment> : getLastDate(tokenData[config.token]);
 
     return (
         <form className={styles.config} onSubmit={handleSubmit}>
@@ -220,13 +271,7 @@ const Config = () => {
                         <select
                             className={styles.dropdown}
                             value={config.token} // Correctly controlled component
-                            onChange={(e) => {
-                                setConfig((prevConfig) => ({
-                                    ...prevConfig,
-                                    token: e.target.value,
-                                }));
-                                setConfigError(undefined);
-                            }}
+                            onChange={handleSelectToken}
                             name="token"
                         >
                             <option value="" disabled>
@@ -236,8 +281,11 @@ const Config = () => {
                         </select>
                     </div>
                     {config.token !== "" && (
-                        <div className={styles.row}>
-                            <header>Token updated to: {}</header>
+                        <div className={`${styles.row} ${styles.dataUpToDate}`}>
+                            <header>
+                                <div>Data updated to:</div>
+                                <strong>{convertToUTCDateTime(renderDataUpToDate)}</strong>
+                            </header>
                             <button onClick={handleUpdateData} className={styles.updateButton} disabled={dataUpToDate}>
                                 Update data
                             </button>
@@ -440,9 +488,11 @@ const checkDate = (date: Date) => {
     return date.getDate() + 1 === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
 };
 
-const getLastDate = () => {
-    const lastYear = Object.keys(tokenData[config.token]).pop();
+const getLastDate = (data: { [token: string]: any[] }) => {
+    const lastYear = Object.keys(data).pop();
     if (lastYear) {
-        console.log(tokenData[config.token][parseInt(lastYear)][tokenData[config.token][parseInt(lastYear)].length - 1]);
+        return data[lastYear][data[lastYear].length - 1].Date;
+    } else {
+        return undefined;
     }
 };
