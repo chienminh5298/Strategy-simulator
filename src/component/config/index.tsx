@@ -15,24 +15,26 @@ import { useDispatch } from "react-redux";
 import { dataActions } from "@src/redux/dataReducer";
 import { configActions } from "@src/redux/configReducer";
 
+export type StoplossType = {
+    target: number;
+    percent: number;
+};
+
 export type configType = {
     token: string;
     year: string;
     value: number;
     prevCandle: "red" | "green";
+    setting: {
+        keepOrderOverNight: boolean;
+    };
     strategy: {
         side: "long" | "short";
-        stoplosses: {
-            target: number;
-            percent: number;
-        }[];
+        stoplosses: StoplossType[];
     };
     triggerStrategy: {
         side: "long" | "short";
-        stoplosses: {
-            target: number;
-            percent: number;
-        }[];
+        stoplosses: StoplossType[];
     };
 };
 
@@ -52,6 +54,9 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
         year: "",
         value: 500,
         prevCandle: "red",
+        setting: {
+            keepOrderOverNight: false,
+        },
         strategy: {
             side: "long",
             stoplosses: [
@@ -333,8 +338,21 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                         }}
                     />
                 </div>
+                <div className={styles.setting}>
+                    <div className={`${styles.row} ${styles.keepOrderOverNight}`}>
+                        <header>Keep order overnight</header>
+                        <div className={styles.content}>
+                            <section title=".squaredOne">
+                                <div className={styles.squaredOne}>
+                                    <input type="checkbox" value="None" id="keepOrderOverNight" name="check" onChange={() => setConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig, keepOrderOverNight: config.setting.keepOrderOverNight } }))} />
+                                    <label htmlFor="keepOrderOverNight"></label>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
                 <div className={styles.prevCandle}>
-                    <header>Previous candle is:</header>
+                    <header>Yesterday's candle is:</header>
                     <div className={styles.side}>
                         <label className={`${styles.option} ${styles.short}`}>
                             <input type="radio" name="prevCandle" value="short" defaultChecked onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, prevCandle: "red" }))} />

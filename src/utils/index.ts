@@ -1,6 +1,3 @@
-import { configType } from "@src/component/config";
-import { candleType } from "@src/redux/dataReducer";
-
 export function convertToUTCDateTime(isoString: string) {
     // Create a Date object from the ISO string
     const date = new Date(isoString);
@@ -10,10 +7,3 @@ export function convertToUTCDateTime(isoString: string) {
 
     return utcDateTime;
 }
-
-const backtestLogic = (config: configType, data: candleType[]) => {};
-
-const checkIsMidNight = (UTCstring: string) => {
-    const date = new Date(UTCstring);
-    return date.getUTCHours() === 0 && date.getUTCMinutes() === 0 && date.getUTCSeconds() === 0;
-};
