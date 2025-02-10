@@ -18,11 +18,47 @@ let openOrder: { [orderId: number]: OrderType } = {};
 let executedOrder: Required<OrderType>[] = [];
 
 export const backtestLogic = (data: candleType[], config: configType) => {
-    for (const candle of data) {
-        checkHitStoploss(candle, config);
+    if (data.length > 480) {
+        for (let i = 481; i <= data.length; i++) {
+            const candle = data[i];
+            checkHitStoploss(candle, config);
 
-        
+            if (checkIsMidNight(candle.Date)) {
+                // Check if exsist open order
+                if (Object.keys(openOrder).length > 0) {
+                    // Check setting is order not keep over night
+                    if (!config.setting.keepOrderOverNight) {
+                        // Close all order
+                        for (const orderId in openOrder) {
+                            const order = openOrder[orderId];
+                            const markPrice = candle.Open; // We close order at mid night => markPrice is open price
+                            closeOrder(order, markPrice, candle);
+                        }
+
+                        // Create new order
+                        processCreateNewMidNightOrder(data, config, candle, i);
+
+                        // Check hit stoploss for new oder just opned (In case hit stoploss at first candle of the day)
+                        checkHitStoploss(candle, config);
+                    } else {
+                        // If order keep over night => Do nothing, let order keep running
+                    }
+                } else {
+                    // Create new order
+                    processCreateNewMidNightOrder(data, config, candle, i);
+                }
+            }
+        }
+    } else {
+        // not enough candle data
     }
+};
+
+const processCreateNewMidNightOrder = (data: candleType[], config: configType, candle: candleType, i: number) => {
+    const prevDayOpenCandle = data[i - 240];
+    const prevDayCloseCandle = data[i - 1];
+    const side = getNewOrderSide({ config, isTriggerOrder: false, openCandle: prevDayOpenCandle, closeCandle: prevDayCloseCandle });
+    createNewOrder({ candle, entryPrice: candle.Open, isTrigger: false, side, config });
 };
 
 const checkIsMidNight = (UTCstring: string) => {
@@ -30,9 +66,8 @@ const checkIsMidNight = (UTCstring: string) => {
     return date.getUTCHours() === 0 && date.getUTCMinutes() === 0 && date.getUTCSeconds() === 0;
 };
 
-const checkExecuteOrder = (candle: candleType, config: configType) => {
-    for (let order in openOrder) {
-    }
+const checkHitTarget = (order: OrderType, candle: candleType) => {
+    
 };
 
 const checkHitStoploss = (candle: candleType, config: configType) => {
@@ -54,6 +89,51 @@ const getProfit = ({ qty, side, markPrice, entryPrice }: { qty: number; side: "l
     } else {
         return (entryPrice - markPrice) * qty;
     }
+};
+
+const getDayColor = (openCandle: candleType, closeCandle: candleType) => {
+    if (openCandle.Open > closeCandle.Close) return "red";
+    else return "green";
+};
+
+type GetNewOrderSideType = {
+    config: configType;
+    isTriggerOrder: boolean;
+    openCandle: candleType;
+    closeCandle: candleType;
+};
+
+const getNewOrderSide = ({ config, isTriggerOrder, openCandle, closeCandle }: GetNewOrderSideType) => {
+    const prevDayCandleColor = getDayColor(openCandle, closeCandle);
+
+    if (!isTriggerOrder) {
+        if (config.strategy.direction === "same") return prevDayCandleColor === "green" ? "long" : "short";
+        else return prevDayCandleColor === "green" ? "short" : "long";
+    } else {
+        if ((config.strategy.direction === "same" && config.triggerStrategy.direction === "same") || (config.strategy.direction === "opposite" && config.triggerStrategy.direction === "opposite")) return prevDayCandleColor === "green" ? "long" : "short";
+        else return prevDayCandleColor === "green" ? "short" : "long";
+    }
+};
+
+type CreateNewOrderType = {
+    candle: candleType;
+    entryPrice: number;
+    config: configType;
+    isTrigger: boolean;
+    side: "long" | "short";
+};
+
+const createNewOrder = ({ candle, entryPrice, config, isTrigger, side }: CreateNewOrderType) => {
+    const orderId = randomId();
+    openOrder[orderId] = {
+        id: orderId,
+        entryTime: candle.Date,
+        entryPrice,
+        qty: config.value / entryPrice,
+        isTrigger,
+        side,
+        stoplossIdx: 0,
+    };
 };
 
 const closeOrder = (order: OrderType, markPrice: number, candle: candleType) => {

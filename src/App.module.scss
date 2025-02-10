@@ -114,8 +114,7 @@
                 .time,
                 .investAmount,
                 .strategy,
-                .setting,
-                .prevCandle {
+                .setting {
                     border-radius: 4px;
                     overflow: hidden;
                     background-color: gray;
@@ -141,11 +140,16 @@
                             }
                         }
                     }
+                    .direction {
+                        color: white;
+                    }
                     .side {
                         display: flex;
                         gap: 10px;
                         justify-content: center;
                         padding: 0 10px;
+                        flex-direction: column;
+
                         .option {
                             flex: 1;
                             display: flex;
@@ -272,16 +276,16 @@
                                 background: #fcfff4;
                                 background: linear-gradient(to bottom, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
                                 box-shadow: inset 0px 1px 1px white, 0px 1px 3px rgba(0, 0, 0, 0.5);
-                                
+
                                 input[type="checkbox"] {
-                                    opacity: 0;  // Instead of visibility: hidden
+                                    opacity: 0; // Instead of visibility: hidden
                                     width: 28px;
                                     height: 28px;
                                     position: absolute;
                                     cursor: pointer;
                                     z-index: 2; // Ensure it’s clickable
                                 }
-                            
+
                                 label {
                                     width: 20px;
                                     height: 20px;
@@ -292,7 +296,7 @@
                                     background: linear-gradient(to bottom, #222 0%, #45484d 100%);
                                     box-shadow: inset 0px 1px 1px rgba(0, 0, 0, 0.5), 0px 1px 0px rgba(255, 255, 255, 1);
                                 }
-                            
+
                                 label::after {
                                     content: "";
                                     width: 16px;
@@ -306,12 +310,12 @@
                                     opacity: 0;
                                     transition: opacity 0.2s ease-in-out;
                                 }
-                            
+
                                 input[type="checkbox"]:checked + label::after {
                                     opacity: 1;
                                 }
                             }
-                            
+
                             /* end .squaredOne */
                         }
                     }

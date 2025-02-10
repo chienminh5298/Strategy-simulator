@@ -24,16 +24,15 @@ export type configType = {
     token: string;
     year: string;
     value: number;
-    prevCandle: "red" | "green";
     setting: {
         keepOrderOverNight: boolean;
     };
     strategy: {
-        side: "long" | "short";
+        direction: "same" | "opposite";
         stoplosses: StoplossType[];
     };
     triggerStrategy: {
-        side: "long" | "short";
+        direction: "same" | "opposite";
         stoplosses: StoplossType[];
     };
 };
@@ -53,12 +52,11 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
         token: "",
         year: "",
         value: 500,
-        prevCandle: "red",
         setting: {
             keepOrderOverNight: false,
         },
         strategy: {
-            side: "long",
+            direction: "opposite",
             stoplosses: [
                 {
                     target: 0,
@@ -71,7 +69,7 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
             ],
         },
         triggerStrategy: {
-            side: "short",
+            direction: "opposite",
             stoplosses: [
                 {
                     target: 0,
@@ -351,24 +349,6 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                         </div>
                     </div>
                 </div>
-                <div className={styles.prevCandle}>
-                    <header>Yesterday's candle is:</header>
-                    <div className={styles.side}>
-                        <label className={`${styles.option} ${styles.short}`}>
-                            <input type="radio" name="prevCandle" value="short" defaultChecked onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, prevCandle: "red" }))} />
-                            <span>
-                                RED <FontAwesomeIcon icon={faArrowDown} />
-                            </span>
-                        </label>
-
-                        <label className={`${styles.option} ${styles.long}`}>
-                            <input type="radio" name="prevCandle" value="long" onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, prevCandle: "green" }))} />
-                            <span>
-                                GREEN <FontAwesomeIcon icon={faArrowUp} />
-                            </span>
-                        </label>
-                    </div>
-                </div>
                 <div className={`${styles.strategy} ${configError === "strategy" && styles.errorForm}`}>
                     <header>
                         <div>Strategy</div>
@@ -379,19 +359,18 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                         )}
                     </header>
                     <div className={styles.side}>
-                        <label className={`${styles.option} ${styles.short}`}>
-                            <input type="radio" name="side" value="short" defaultChecked={config.strategy.side === "short"} onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, strategy: { stoplosses: [...prevConfig.strategy.stoplosses], side: e.target.value as "short" } }))} />
-                            <span>
-                                SHORT <FontAwesomeIcon icon={faArrowDown} />
-                            </span>
-                        </label>
+                        <div className={styles.direction}>Direction compared to previous candle:</div>
+                        <div className={styles.option}>
+                            <label className={`${styles.option} ${styles.short}`}>
+                                <input type="radio" name="direction" value="same" defaultChecked={config.strategy.direction === "same"} onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, strategy: { stoplosses: [...prevConfig.strategy.stoplosses], direction: e.target.value as "same" } }))} />
+                                <span>Same</span>
+                            </label>
 
-                        <label className={`${styles.option} ${styles.long}`}>
-                            <input type="radio" name="side" value="long" defaultChecked={config.strategy.side === "long"} onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, strategy: { stoplosses: [...prevConfig.strategy.stoplosses], side: e.target.value as "long" } }))} />
-                            <span>
-                                LONG <FontAwesomeIcon icon={faArrowUp} />
-                            </span>
-                        </label>
+                            <label className={`${styles.option} ${styles.long}`}>
+                                <input type="radio" name="direction" value="opposite" defaultChecked={config.strategy.direction === "opposite"} onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, strategy: { stoplosses: [...prevConfig.strategy.stoplosses], direction: e.target.value as "opposite" } }))} />
+                                <span>Opposite</span>
+                            </label>
+                        </div>
                     </div>
                     <div className={styles.stoplosses}>
                         <div className={styles.stoploss}>
@@ -418,19 +397,18 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                             </div>
                         </header>
                         <div className={styles.side}>
-                            <label className={`${styles.option} ${styles.short}`}>
-                                <input type="radio" name="triggerSide" value="short" defaultChecked onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, triggerStrategy: { stoplosses: [...prevConfig.triggerStrategy.stoplosses], side: e.target.value as "short" } }))} />
-                                <span>
-                                    SHORT <FontAwesomeIcon icon={faArrowDown} />
-                                </span>
-                            </label>
+                            <div className={styles.direction}>Direction compared to strategy:</div>
+                            <div className={styles.option}>
+                                <label className={`${styles.option} ${styles.short}`}>
+                                    <input type="radio" name="triggerDirection" value="same" defaultChecked={config.triggerStrategy.direction === "same"} onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, triggerStrategy: { stoplosses: [...prevConfig.triggerStrategy.stoplosses], direction: e.target.value as "same" } }))} />
+                                    <span>Same</span>
+                                </label>
 
-                            <label className={`${styles.option} ${styles.long}`}>
-                                <input type="radio" name="triggerSide" value="long" onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, triggerStrategy: { stoplosses: [...prevConfig.triggerStrategy.stoplosses], side: e.target.value as "long" } }))} />
-                                <span>
-                                    LONG <FontAwesomeIcon icon={faArrowUp} />
-                                </span>
-                            </label>
+                                <label className={`${styles.option} ${styles.long}`}>
+                                    <input type="radio" name="triggerDirection" value="opposite" defaultChecked={config.triggerStrategy.direction === "opposite"} onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, triggerStrategy: { stoplosses: [...prevConfig.triggerStrategy.stoplosses], direction: e.target.value as "opposite" } }))} />
+                                    <span>Opposite</span>
+                                </label>
+                            </div>
                         </div>
                         <div className={styles.stoplosses}>
                             <div className={styles.stoploss}>
