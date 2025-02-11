@@ -1,7 +1,7 @@
 import { configType, StoplossType } from "@src/component/config";
 import { candleType } from "@src/redux/dataReducer";
 
-type OrderType = {
+export type OrderType = {
     id: number;
     entryTime: string;
     executedTime?: string; // Optional

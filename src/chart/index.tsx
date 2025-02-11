@@ -1,57 +1,15 @@
 import React from "react";
-import { ColorType, CrosshairMode, createChart } from "lightweight-charts";
+import { ColorType, createChart } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import styles from "@src/App.module.scss";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-// import { useDispatch } from "react-redux";
 
-type ChartPropType = {
-    data: dateDataType;
-    setIsFetchData: React.Dispatch<React.SetStateAction<boolean>>;
-    isFetchData: boolean;
-    duration: number;
-};
-
-type dateType = {
-    candle: {
-        open: number;
-        high: number;
-        low: number;
-        close: number;
-    };
-    openOrders: openOrder[];
-    executeOrders: executeOrder[];
-    moveOrders: openOrder[];
-};
-
-type dateDataType = {
-    [date: string]: dateType;
-};
-
-type openOrder = {
-    orderId: string;
-    qty: number;
-    buyPrice: number;
-    date: Date;
-    side: "BUY" | "SELL";
-    stopPrice: number;
-    hitPrice: number | null;
-    rootOrderId: string;
-};
-
-type executeOrder = {
-    orderId: string;
-    openDate: Date;
-    executeDate: Date;
-    side: "BUY" | "SELL";
-    profit: number;
-};
-
-const Chart = ({ duration = 0.1 }: ChartPropType) => {
+const Chart = () => {
     // const dispatch = useDispatch();
 
-    const data = useSelector((state: RootState) => state.chart.data);
+    const { data, duration } = useSelector((state: RootState) => state.chart);
+
     const chartContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -180,7 +138,7 @@ const Chart = ({ duration = 0.1 }: ChartPropType) => {
                 // candleSeries.update(dateData);
 
                 chart.timeScale().scrollToPosition(nnnn.length, false);
-            }, 6.25);
+            }, duration);
         }
         return () => {
             chart.remove();

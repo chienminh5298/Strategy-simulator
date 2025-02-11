@@ -78,7 +78,7 @@ const App = () => {
                         <button className={styles.runButton} disabled={!isConfigCorrect} onClick={handleRun}>
                             Run backtest
                         </button>
-                        <Chart setIsFetchData={setIsFetchData} duration={duration} />
+                        <Chart />
                     </div>
                 </div>
             </div>

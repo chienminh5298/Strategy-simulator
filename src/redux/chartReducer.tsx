@@ -3,8 +3,10 @@ import { ChartCandleType } from "@src/utils/backtestLogic";
 
 const initialState: {
     data: ChartCandleType;
+    duration: number;
 } = {
     data: {},
+    duration: 6,
 };
 
 const chartSlice = createSlice({
