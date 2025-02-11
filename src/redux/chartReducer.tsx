@@ -1,16 +1,21 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { ChartCandleType } from "@src/utils/backtestLogic";
 
 const initialState: {
-    data: [];
+    data: ChartCandleType;
 } = {
-    data: [],
+    data: {},
 };
 
 const chartSlice = createSlice({
     name: "chart",
     initialState: initialState,
-    reducers: {},
+    reducers: {
+        updateData(state, payload) {
+            Object.assign(state.data, payload.payload);
+        },
+    },
 });
 
-export const configActions = chartSlice.actions;
+export const chartActions = chartSlice.actions;
 export default chartSlice.reducer;

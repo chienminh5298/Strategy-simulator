@@ -26,6 +26,7 @@ export type configType = {
     value: number;
     setting: {
         keepOrderOverNight: boolean;
+        isTrigger: boolean;
     };
     strategy: {
         direction: "same" | "opposite";
@@ -47,41 +48,8 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
     const [dataUpToDate, setDataUpToDate] = useState(false);
     const [configError, setConfigError] = useState<undefined | "token" | "year" | "value" | "strategy" | "triggerStrategy">(undefined);
     const tokenData = useSelector((state: RootState) => state.data);
-    const [isTrigger, setIsTrigger] = useState<boolean>(true);
-    const [config, setConfig] = useState<configType>({
-        token: "",
-        year: "",
-        value: 500,
-        setting: {
-            keepOrderOverNight: false,
-        },
-        strategy: {
-            direction: "opposite",
-            stoplosses: [
-                {
-                    target: 0,
-                    percent: -2,
-                },
-                {
-                    target: 0.7,
-                    percent: 0.7,
-                },
-            ],
-        },
-        triggerStrategy: {
-            direction: "opposite",
-            stoplosses: [
-                {
-                    target: 0,
-                    percent: -2,
-                },
-                {
-                    target: 0.7,
-                    percent: 0.7,
-                },
-            ],
-        },
-    });
+    const storeConfig = useSelector((state: RootState) => state.config.config);
+    const [config, setConfig] = useState<configType>(storeConfig);
 
     let renderTokens = Object.keys(tokenData).map((token, idx) => (
         <option key={idx} value={token}>
@@ -238,14 +206,15 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
     // Handle submit
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const checkCf = checkConfig(config, isTrigger);
+        const checkCf = checkConfig(config);
         if (checkCf === undefined) {
             setConfig(config);
-            dispatch(configActions.updateConfig(false));
+            dispatch(configActions.updateIsConfigCorrect(true));
+            dispatch(configActions.updateConfig(config));
             toast.success("Apply config successfully. You can run backtest now.");
         } else {
             setConfigError(checkCf);
-            dispatch(configActions.updateConfig(true));
+            dispatch(configActions.updateIsConfigCorrect(false));
         }
     };
 
@@ -342,7 +311,7 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                         <div className={styles.content}>
                             <section title=".squaredOne">
                                 <div className={styles.squaredOne}>
-                                    <input type="checkbox" value="None" id="keepOrderOverNight" name="check" onChange={() => setConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig, keepOrderOverNight: config.setting.keepOrderOverNight } }))} />
+                                    <input type="checkbox" value="None" id="keepOrderOverNight" name="check" onChange={() => setConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, keepOrderOverNight: config.setting.keepOrderOverNight } }))} />
                                     <label htmlFor="keepOrderOverNight"></label>
                                 </div>
                             </section>
@@ -352,14 +321,14 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                 <div className={`${styles.strategy} ${configError === "strategy" && styles.errorForm}`}>
                     <header>
                         <div>Strategy</div>
-                        {!isTrigger && (
-                            <div className={styles.addStrategy} onClick={() => setIsTrigger(true)}>
+                        {!config.setting.isTrigger && (
+                            <div className={styles.addStrategy} onClick={() => setConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, isTrigger: true } }))}>
                                 Add trigger
                             </div>
                         )}
                     </header>
                     <div className={styles.side}>
-                        <div className={styles.direction}>Direction compared to previous candle:</div>
+                        <div className={styles.direction}>Direction compared to previous day candle:</div>
                         <div className={styles.option}>
                             <label className={`${styles.option} ${styles.short}`}>
                                 <input type="radio" name="direction" value="same" defaultChecked={config.strategy.direction === "same"} onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, strategy: { stoplosses: [...prevConfig.strategy.stoplosses], direction: e.target.value as "same" } }))} />
@@ -388,11 +357,11 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                         </div>
                     </div>
                 </div>
-                {isTrigger && (
-                    <div className={`${styles.strategy} ${isTrigger && styles.show} ${configError === "triggerStrategy" && styles.errorForm}`}>
+                {config.setting.isTrigger && (
+                    <div className={`${styles.strategy} ${config.setting.isTrigger && styles.show} ${configError === "triggerStrategy" && styles.errorForm}`}>
                         <header>
                             <div>Trigger Strategy</div>
-                            <div className={styles.addStrategy} onClick={() => setIsTrigger(false)}>
+                            <div className={styles.addStrategy} onClick={() => setConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, isTrigger: false } }))}>
                                 Delete <FontAwesomeIcon icon={faTrashCan} />
                             </div>
                         </header>
@@ -440,7 +409,7 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
 
 export default Config;
 
-const checkConfig = (config: configType, isTrigger: boolean) => {
+const checkConfig = (config: configType) => {
     if (config.token === "") return "token";
     if (config.year === "") return "year";
     if (config.value < 500) return "value";
@@ -448,7 +417,7 @@ const checkConfig = (config: configType, isTrigger: boolean) => {
     const checkStrategy = checkStrategyFn(config.strategy.stoplosses);
     if (checkStrategy !== undefined) return checkStrategy;
     // Check trigger strategy
-    if (isTrigger) {
+    if (config.setting.isTrigger) {
         const checkTriggerStrategy = checkStrategyFn(config.triggerStrategy.stoplosses);
         if (checkTriggerStrategy !== undefined) return "triggerStrategy";
     }

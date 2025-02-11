@@ -2,6 +2,8 @@ import React from "react";
 import { ColorType, CrosshairMode, createChart } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import styles from "@src/App.module.scss";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
 // import { useDispatch } from "react-redux";
 
 type ChartPropType = {
@@ -46,13 +48,13 @@ type executeOrder = {
     profit: number;
 };
 
-const Chart = ({ data, setIsFetchData, duration }: ChartPropType) => {
+const Chart = ({ duration = 0.1 }: ChartPropType) => {
     // const dispatch = useDispatch();
 
+    const data = useSelector((state: RootState) => state.chart.data);
     const chartContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const price_data = data ? data : {};
         if (!chartContainerRef.current) {
             return;
         }
@@ -72,11 +74,8 @@ const Chart = ({ data, setIsFetchData, duration }: ChartPropType) => {
                     color: "#334158",
                 },
             },
-            crosshair: {
-                mode: CrosshairMode.Normal,
-            },
             timeScale: {
-                barSpacing: 20,
+                barSpacing: 10,
                 fixLeftEdge: true,
                 fixRightEdge: true,
                 timeVisible: true,
@@ -103,22 +102,21 @@ const Chart = ({ data, setIsFetchData, duration }: ChartPropType) => {
         // update lable time
         const lineSeries = chart.addLineSeries();
         let intervalID: any;
-        if (Object.keys(price_data).length !== 0) {
-            const ddd = Object.keys(price_data).map((key) => {
-                const temp = price_data[key];
+        if (Object.keys(data).length !== 0) {
+            const ddd = Object.keys(data).map((key) => {
+                const temp = data[key];
                 return {
                     time: Math.floor(new Date(key).getTime() / 1000), // Convert to Unix timestamp in seconds
-                    open: temp.candle.open,
-                    high: temp.candle.high,
-                    low: temp.candle.low,
-                    close: temp.candle.close,
-                    openOrders: temp.openOrders,
-                    executeOrders: temp.executeOrders,
-                    moveOrders: temp.moveOrders,
+                    open: temp.candle.Open,
+                    high: temp.candle.High,
+                    low: temp.candle.Low,
+                    close: temp.candle.Close,
+                    openOrderSide: temp.openOrderSide,
+                    executedOrder: temp.executedOrder,
                 };
             });
 
-            const line_data: any[] = Object.keys(price_data).map((key) => {
+            const line_data: any[] = Object.keys(data).map((key) => {
                 return {
                     time: Math.floor(new Date(key).getTime() / 1000),
                 };
@@ -145,35 +143,44 @@ const Chart = ({ data, setIsFetchData, duration }: ChartPropType) => {
                 }
 
                 let text = "";
-                if (dateData.openOrders.length !== 0) {
-                    text = dateData.openOrders[0].side;
+                let borderColor = "";
+                let shape = "";
+
+                if (dateData.openOrderSide) {
+                    text = dateData.openOrderSide.toUpperCase();
                 }
 
-                let shape = "";
-                if (text === "SELL") shape = "arrowDown";
-                if (text === "BUY") shape = "arrowUp";
+                if (text === "SHORT") {
+                    shape = "arrowDown";
+                    borderColor = "#0032ff";
+                }
+                if (text === "LONG") {
+                    shape = "arrowUp";
+                    borderColor = "#0032ff";
+                }
 
                 nnnn.push({
                     time: dateData.time,
-                    position: text === "SELL" ? "aboveBar" : "belowBar",
-                    color: text === "SELL" ? "#ef476f" : "#06d6a0",
+                    position: text === "SHORT" ? "aboveBar" : "belowBar",
+                    color: text === "SHORT" ? "#ef476f" : "#06d6a0",
                     shape,
                     text,
+                    size: 2,
                 });
 
+                candleSeries.update({
+                    time: dateData.time,
+                    open: dateData.open,
+                    high: dateData.high,
+                    low: dateData.low,
+                    close: dateData.close,
+                    ...(borderColor !== "" ? { borderColor, borderWidth: 20 } : {}),
+                });
                 candleSeries.setMarkers(nnnn);
-                candleSeries.update(dateData);
-
-                // Update backtest store
-                // dispatch(backtestAction.updateClosePrice(dateData.close));
-                // dispatch(backtestAction.updateDate(dateData));
+                // candleSeries.update(dateData);
 
                 chart.timeScale().scrollToPosition(nnnn.length, false);
-            }, duration);
-
-            setTimeout(() => {
-                setIsFetchData(false);
-            }, Object.keys(price_data).length * duration);
+            }, 6.25);
         }
         return () => {
             chart.remove();

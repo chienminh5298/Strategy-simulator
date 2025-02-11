@@ -8,17 +8,27 @@ import { Bounce, toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // Import default styles
 import { fetchTokenData } from "@src/http";
 import { useDispatch } from "react-redux";
-import { dataActions } from "./redux/dataReducer";
+import { candleType, dataActions } from "@src/redux/dataReducer";
 import { useQuery } from "@tanstack/react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRotate } from "@fortawesome/free-solid-svg-icons";
 import { useSelector } from "react-redux";
 import { RootState } from "@src/redux/store";
+import { backtestLogic } from "./utils/backtestLogic";
+import { chartActions } from "./redux/chartReducer";
 
 const App = () => {
     const isConfigCorrect = useSelector((state: RootState) => state.config.isConfigCorrect);
+    const config = useSelector((state: RootState) => state.config.config);
+    const dataStore = useSelector((state: RootState) => state.data);
+    const [rawData, setRawData] = useState<candleType[]>([]);
 
-    const [chartData, setChartData] = useState();
+    useEffect(() => {
+        if (isConfigCorrect) {
+            setRawData(dataStore[config.token][parseInt(config.year)]);
+        }
+    }, [isConfigCorrect]);
+
     const [isFetchData, setIsFetchData] = useState(false);
     const [duration, setDuration] = useState(100);
     const dispatch = useDispatch();
@@ -41,6 +51,14 @@ const App = () => {
         }
     }, [data, dispatch]);
 
+    // Handle run backtest
+    const handleRun = () => {
+        if (isConfigCorrect) {
+            const chartData = backtestLogic(rawData, config);
+            dispatch(chartActions.updateData(chartData));
+        }
+    };
+
     return (
         <div className={styles.wrapper}>
             {isFetchData && (
@@ -57,10 +75,10 @@ const App = () => {
                 <div className={styles.chart}>
                     <header className={styles.frameHeader}>Live chart</header>
                     <div className={styles.container}>
-                        <button className={styles.runButton} disabled={isConfigCorrect}>
+                        <button className={styles.runButton} disabled={!isConfigCorrect} onClick={handleRun}>
                             Run backtest
                         </button>
-                        <Chart data={chartData ? chartData.data : {}} setIsFetchData={setIsFetchData} duration={duration} />
+                        <Chart setIsFetchData={setIsFetchData} duration={duration} />
                     </div>
                 </div>
             </div>

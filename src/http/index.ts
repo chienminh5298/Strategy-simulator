@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // const SERVER_URL = "http://127.0.0.1:3001";
-const SERVER_URL = "https://script.google.com/macros/s/AKfycbx9lA-N_NTgD1UPfXhUEJZwdaHlb4UT-qQ12kN8VYjOtuHPXwI8BQFemAd6uE9E3ZrGKA/exec?";
+const SERVER_URL = "https://script.google.com/macros/s/AKfycbwU49UlPH_Gke7HodyoG3JvJabYdkasYYimTtJoGUGUg4YVvtOamCLlgXTZXUY6bUueNw/exec?";
 
 export const fetchTokenData = async () => {
     return await axios.get(`${SERVER_URL}action=readAll`);
