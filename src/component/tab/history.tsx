@@ -41,14 +41,12 @@ const HistoryTab = () => {
             <Fragment key={idx}>
                 <div className={`${styles.cell}`}>{convertToUTCDateTime(items.entryTime)}</div>
                 <div className={`${styles.cell}`}>{convertToUTCDateTime(items.executedTime)}</div>
-                <div className={`${styles.cell} ${styles.sell}`}>
-                    <FontAwesomeIcon icon={faXmark} />
-                </div>
-                <div className={`${styles.cell}`}>233.23</div>
-                <div className={`${styles.cell}`}>290.33</div>
-                <div className={`${styles.cell} ${styles.sell}`}>SELL</div>
-                <div className={`${styles.cell}`}>0.23</div>
-                <div className={`${styles.cell} ${styles.sell}`}>-4.232$</div>
+                <div className={`${styles.cell} ${items.isTrigger ? styles.buy : styles.sell}`}>{items.isTrigger ? <FontAwesomeIcon icon={faCheck} /> : <FontAwesomeIcon icon={faXmark} />}</div>
+                <div className={`${styles.cell}`}>{items.entryPrice.toFixed(3)}</div>
+                <div className={`${styles.cell}`}>{items.markPrice.toFixed(3)}</div>
+                <div className={`${styles.cell} ${items.side === "short" ? styles.sell : styles.buy}`}>{items.side.toLocaleUpperCase()}</div>
+                <div className={`${styles.cell}`}>{items.qty.toFixed(3)}</div>
+                <div className={`${styles.cell} ${items.profit > 0 ? styles.buy : styles.sell}`}>{items.profit.toFixed(3)} $</div>
             </Fragment>
         );
     });

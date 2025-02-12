@@ -101,7 +101,7 @@ const Chart = () => {
                 }
 
                 let text = "";
-                let borderColor = "";
+                let borderColor = "#e4ff00";
                 let shape = "";
 
                 if (dateData.openOrderSide) {
@@ -110,11 +110,9 @@ const Chart = () => {
 
                 if (text === "SHORT") {
                     shape = "arrowDown";
-                    borderColor = "#0032ff";
                 }
                 if (text === "LONG") {
                     shape = "arrowUp";
-                    borderColor = "#0032ff";
                 }
 
                 nnnn.push({
@@ -132,7 +130,7 @@ const Chart = () => {
                     high: dateData.high,
                     low: dateData.low,
                     close: dateData.close,
-                    ...(borderColor !== "" ? { borderColor, borderWidth: 20 } : {}),
+                    ...(text !== "" ? { borderColor, borderWidth: 20 } : {}),
                 });
                 candleSeries.setMarkers(nnnn);
                 // candleSeries.update(dateData);
