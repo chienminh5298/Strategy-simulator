@@ -6,14 +6,21 @@ import { useSelector } from "react-redux";
 import { RootState } from "@src/redux/store";
 import { candleType } from "@src/redux/dataReducer";
 import { OrderType } from "@src/utils/backtestLogic";
-import { convertToUTCDateTime } from "@src/utils";
+import { convertToUTCDateTime, toUSD } from "@src/utils";
 
 const HistoryTab = () => {
     const { data, duration } = useSelector((state: RootState) => state.chart);
-
     const [visibleItems, setVisibleItems] = useState<Required<OrderType>[]>([]);
+    const [sum, setSum] = useState(0);
 
     useEffect(() => {
+        setSum(visibleItems.reduce((acc, item) => acc + item.profit, 0));
+    }, [visibleItems]);
+
+    useEffect(() => {
+        if (Object.keys(data).length === 0) {
+            setVisibleItems([]);
+        }
         let i = 0;
         const tempData = Object.values(data);
 
@@ -46,14 +53,16 @@ const HistoryTab = () => {
                 <div className={`${styles.cell}`}>{items.markPrice.toFixed(3)}</div>
                 <div className={`${styles.cell} ${items.side === "short" ? styles.sell : styles.buy}`}>{items.side.toLocaleUpperCase()}</div>
                 <div className={`${styles.cell}`}>{items.qty.toFixed(3)}</div>
-                <div className={`${styles.cell} ${items.profit > 0 ? styles.buy : styles.sell}`}>{items.profit.toFixed(3)} $</div>
+                <div className={`${styles.cell} ${items.profit > 0 ? styles.buy : styles.sell}`}>{toUSD(items.profit, true)}</div>
             </Fragment>
         );
     });
 
     return (
         <div className={styles.container}>
-            <div className={styles.total}>Total: 24.323$</div>
+            <div className={styles.total}>
+                Total: <span className={sum < 0 ? styles.sell : styles.buy}>{toUSD(sum, true)}</span>
+            </div>
             <div className={styles.table}>
                 {/* Header Row */}
                 <div className={`${styles.cell} ${styles.header}`}>Entry time</div>

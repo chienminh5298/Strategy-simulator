@@ -4,15 +4,22 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    .total{
+    .total {
+        width: 40%;
+        text-align: center;
         display: inline-block;
         margin: 5px auto;
         padding: 10px;
-        font-size: 24px;
-        background-color: #e9ecef;
-        border-radius: 5px;
-        background-color: #4bffb5;
         font-weight: bold;
+        border-radius: 3px;
+        background-color: gray;
+        color: white;
+    }
+    .buy {
+        color: #4bffb5;
+    }
+    .sell {
+        color: #ff4976;
     }
     .table {
         display: grid;

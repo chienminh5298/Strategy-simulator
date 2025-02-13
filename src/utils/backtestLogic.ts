@@ -43,27 +43,30 @@ export const backtestLogic = (data: candleType[], config: configType) => {
             const order = openOrder[orderId];
 
             const stoploss: StoplossType[] = order.isTrigger ? config.triggerStrategy.stoplosses : config.strategy.stoplosses;
+            const markPrice = getMarkPRice(stoploss[order.stoplossIdx + 1].target, order.side, order.entryPrice);
 
-            // Check is last target
-            if (order.stoplossIdx === stoploss.length - 1) {
-                //// Close order
-                // Check strategy or triggerStrategy
-                if (!order.isTrigger) {
-                    const markPrice = getMarkPRice(stoploss[order.stoplossIdx].target, order.side, order.entryPrice);
-                    if (config.setting.isTrigger) {
-                        // new trigger order
-                        const side = getTriggerOrderSide(order, config);
-                        createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
+            if ((order.side === "long" && candle.High >= markPrice) || (order.side === "short" && candle.Low <= markPrice)) {
+                // Check is last target
+                if (order.stoplossIdx + 1 === stoploss.length - 1) {
+                    //// Close order
+                    // Check strategy or triggerStrategy
+                    if (!order.isTrigger) {
+                        // Close strategy order
+                        closeOrder(order, markPrice, candle);
+
+                        if (config.setting.isTrigger) {
+                            // new trigger order
+                            const side = getTriggerOrderSide(order, config);
+                            createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
+                        }
                     } else {
                         closeOrder(order, markPrice, candle);
                     }
                 } else {
-                    const markPrice = getMarkPRice(stoploss[order.stoplossIdx].target, order.side, order.entryPrice);
-                    closeOrder(order, markPrice, candle);
+                    // Move stoploss by update stoplossIdx
+                    openOrder[order.id] = { ...openOrder[order.id], stoplossIdx: openOrder[order.id].stoplossIdx + 1 };
+                    console.log(openOrder[order.id]);
                 }
-            } else {
-                // Move stoploss by update stoplossIdx
-                openOrder[order.id] = { ...openOrder[order.id], stoplossIdx: openOrder[order.id].stoplossIdx + 1 };
             }
         }
     };
@@ -78,7 +81,6 @@ export const backtestLogic = (data: candleType[], config: configType) => {
             const order = openOrder[id];
             const stoploss: StoplossType[] = order.isTrigger ? config.triggerStrategy.stoplosses : config.strategy.stoplosses;
             const markPrice = getMarkPRice(stoploss[order.stoplossIdx].percent, order.side, order.entryPrice);
-
             if ((order.side === "long" && candle.Low <= markPrice) || (order.side === "short" && candle.Low >= markPrice)) {
                 // close order
                 closeOrder(order, markPrice, candle);
@@ -153,16 +155,15 @@ export const backtestLogic = (data: candleType[], config: configType) => {
 
     const getMarkPRice = (percent: number, side: "long" | "short", entryPrice: number) => {
         if (side === "long") {
-            return entryPrice - (percent * entryPrice) / 100;
-        } else {
             return entryPrice + (percent * entryPrice) / 100;
+        } else {
+            return entryPrice - (percent * entryPrice) / 100;
         }
     };
 
     const randomId = () => Math.floor(100000000 + Math.random() * 900000000);
 
     //========================= Logic start from here ========================= //
-
     for (let i = 481; i < data.length; i++) {
         const candle = data[i];
         response[candle.Date] = { candle }; // This is not a part of logic

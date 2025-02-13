@@ -16,6 +16,9 @@ const chartSlice = createSlice({
         updateData(state, payload) {
             Object.assign(state.data, payload.payload);
         },
+        resetState(state, payload) {
+            state.data = {};
+        },
     },
 });
 

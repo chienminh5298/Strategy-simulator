@@ -2,7 +2,6 @@ import React, { Fragment, useEffect, useState } from "react";
 import styles from "@src/App.module.scss";
 import Chart from "./chart";
 
-import HistoryTab from "@src/component/tab/history";
 import Config from "@src/component/config";
 import { Bounce, toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // Import default styles
@@ -16,6 +15,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@src/redux/store";
 import { backtestLogic } from "./utils/backtestLogic";
 import { chartActions } from "./redux/chartReducer";
+import Tab from "@src/component/tab";
 
 const App = () => {
     const isConfigCorrect = useSelector((state: RootState) => state.config.isConfigCorrect);
@@ -82,24 +82,9 @@ const App = () => {
                     </div>
                 </div>
             </div>
-            <div className={styles.board}>
-                <header className={styles.frameHeader}>
-                    <label className={styles.option}>
-                        <input type="radio" name="tab" value="long" />
-                        <span>History</span>
-                    </label>
-                    <label className={styles.option}>
-                        <input type="radio" name="tab" value="short" defaultChecked />
-                        <span>Analyse</span>
-                    </label>
-                </header>
-                <div>
-                    <HistoryTab />
-                </div>
-            </div>
+            <Tab />
         </div>
     );
-    return <Fragment></Fragment>;
 };
 
 export default App;

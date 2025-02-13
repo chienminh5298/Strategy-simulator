@@ -7,3 +7,13 @@ export function convertToUTCDateTime(isoString: string) {
 
     return utcDateTime;
 }
+
+export const toUSD = (value: number | string = 0, sign: boolean = true, maximumFractionDigits: number = 2): string => {
+    return value.toLocaleString("en-US", {
+        style: "currency",
+        currency: "USD",
+        signDisplay: value === 0 || !sign ? "never" : "always",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: maximumFractionDigits,
+    });
+};

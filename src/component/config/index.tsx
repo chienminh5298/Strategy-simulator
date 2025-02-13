@@ -14,6 +14,7 @@ import { convertToUTCDateTime } from "@src/utils";
 import { useDispatch } from "react-redux";
 import { dataActions } from "@src/redux/dataReducer";
 import { configActions } from "@src/redux/configReducer";
+import { chartActions } from "@src/redux/chartReducer";
 
 export type StoplossType = {
     target: number;
@@ -211,6 +212,7 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
             setConfig(config);
             dispatch(configActions.updateIsConfigCorrect(true));
             dispatch(configActions.updateConfig(config));
+            dispatch(chartActions.resetState());
             toast.success("Apply config successfully. You can run backtest now.");
         } else {
             setConfigError(checkCf);
@@ -311,7 +313,7 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                         <div className={styles.content}>
                             <section title=".squaredOne">
                                 <div className={styles.squaredOne}>
-                                    <input type="checkbox" value="None" id="keepOrderOverNight" name="check" onChange={() => setConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, keepOrderOverNight: config.setting.keepOrderOverNight } }))} />
+                                    <input type="checkbox" value="None" id="keepOrderOverNight" name="keepOrderOverNight" onChange={() => setConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, keepOrderOverNight: !config.setting.keepOrderOverNight } }))} />
                                     <label htmlFor="keepOrderOverNight"></label>
                                 </div>
                             </section>

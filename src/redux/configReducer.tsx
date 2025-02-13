@@ -14,18 +14,34 @@ const initialState: {
         value: 500,
         setting: {
             keepOrderOverNight: false,
-            isTrigger: true,
+            isTrigger: false,
         },
         strategy: {
             direction: "opposite",
             stoplosses: [
                 {
                     target: 0,
-                    percent: -2,
+                    percent: -5,
                 },
                 {
-                    target: 0.7,
-                    percent: 0.7,
+                    target: 1,
+                    percent: 0,
+                },
+                {
+                    target: 2,
+                    percent: 1,
+                },
+                {
+                    target: 3,
+                    percent: 2,
+                },
+                {
+                    target: 4,
+                    percent: 3,
+                },
+                {
+                    target: 5,
+                    percent: 5,
                 },
             ],
         },
