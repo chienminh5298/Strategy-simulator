@@ -20,13 +20,14 @@ const dataSlice = createSlice({
     initialState: initialState,
     reducers: {
         fetchToken(state, payload) {
-            console.log(payload.payload)
             Object.assign(state, payload.payload);
         },
-        updateData(state, payload) {
+
+        updateYearData(state, payload) {
             const data = payload.payload;
             const token = data.token;
-            state[token] = data.data.data;
+            const year = data.year === "" ? new Date().getFullYear() : data.year;
+            Object.assign(state[token][year], data.data.data);
         },
     },
 });

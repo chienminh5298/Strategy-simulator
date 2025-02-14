@@ -1,15 +1,14 @@
 import React, { Dispatch, Fragment, SetStateAction, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashCan } from "@fortawesome/free-regular-svg-icons";
-import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons";
 import CurrencyInput from "react-currency-input-field";
 import styles from "@src/App.module.scss";
 import { toast } from "react-toastify";
 import { errorMessage } from "@src/component/config/errorMessage";
 import { useSelector } from "react-redux";
 import { RootState } from "@src/redux/store";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchOneTokenData, mutationUpdateData } from "@src/http";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { fetchTokenDataByYear, mutationUpdateData } from "@src/http";
 import { convertToUTCDateTime } from "@src/utils";
 import { useDispatch } from "react-redux";
 import { dataActions } from "@src/redux/dataReducer";
@@ -45,7 +44,6 @@ type ConfigProps = {
 
 const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
     const dispatch = useDispatch();
-    const queryClient = useQueryClient();
     const [dataUpToDate, setDataUpToDate] = useState(false);
     const [configError, setConfigError] = useState<undefined | "token" | "year" | "value" | "strategy" | "triggerStrategy">(undefined);
     const tokenData = useSelector((state: RootState) => state.data);
@@ -126,18 +124,6 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
         mutate();
     };
 
-    const { data, refetch } = useQuery({
-        queryKey: ["data", config.token],
-        queryFn: () => fetchOneTokenData(config.token),
-        enabled: false, // Disable auto-fetch
-    });
-
-    useEffect(() => {
-        if (data) {
-            dispatch(dataActions.updateData({ token: config.token, data: data }));
-        }
-    }, [data, dispatch]);
-
     const { mutate } = useMutation({
         mutationFn: () => mutationUpdateData(config.token, getLastDate(tokenData[config.token])),
         onMutate: () => {
@@ -151,7 +137,6 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
         },
         onSuccess: (res) => {
             // Ensure fetch state resets properly
-            queryClient.invalidateQueries({ queryKey: ["dataSOL"] });
             refetch();
             setIsFetchData(false);
             toast.success("Data fetched successfully.");
@@ -233,8 +218,42 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
         }
     };
 
+    // Handle select year
+    const handleSelectYear = (e: any) => {
+        setConfig((prevConfig) => ({
+            ...prevConfig,
+            year: e.target.value,
+        }));
+        setConfigError(undefined);
+    };
+
+    // Query year data
+    const {
+        data: yearData,
+        isLoading,
+        refetch,
+    } = useQuery({
+        queryKey: ["data", config.token, config.year],
+        queryFn: () => fetchTokenDataByYear(config.token, config.year),
+        enabled: false,
+    });
+
+    useEffect(() => {
+        if (yearData) {
+            dispatch(dataActions.updateYearData({ token: config.token, year: config.year, data: yearData }));
+        }
+    }, [yearData, dispatch]);
+
+    // Refetch when select a new year
+    useEffect(() => {
+        if (config.token !== "" && config.year !== "") {
+            if (Object.values(tokenData[config.token][parseInt(config.year)]).length === 0) {
+                refetch();
+            }
+        }
+    }, [config.token, config.year]);
+
     let renderDataUpToDate = config.token === "" ? <Fragment></Fragment> : getLastDate(tokenData[config.token]);
-    // let renderDataUpToDate = "";
 
     return (
         <form className={styles.config} onSubmit={handleSubmit}>
@@ -269,18 +288,7 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                 </div>
                 <div className={`${styles.time} ${configError === "year" && styles.errorForm}`}>
                     <header>Year:</header>
-                    <select
-                        className={styles.dropdown}
-                        name="year"
-                        value={config.year}
-                        onChange={(e) => {
-                            setConfig((prevConfig) => ({
-                                ...prevConfig,
-                                year: e.target.value,
-                            }));
-                            setConfigError(undefined);
-                        }}
-                    >
+                    <select className={styles.dropdown} name="year" value={config.year} onChange={handleSelectYear}>
                         <option value="" disabled>
                             Select time range
                         </option>
