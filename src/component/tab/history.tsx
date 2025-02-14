@@ -4,7 +4,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { useSelector } from "react-redux";
 import { RootState } from "@src/redux/store";
-import { candleType } from "@src/redux/dataReducer";
 import { OrderType } from "@src/utils/backtestLogic";
 import { convertToUTCDateTime, toUSD } from "@src/utils";
 
@@ -32,7 +31,7 @@ const HistoryTab = () => {
                 const order = tempData[i].executedOrder;
 
                 if (order) {
-                    setVisibleItems((prev) => [...prev, order]); // Ensure order exists before setting state
+                    setVisibleItems((prev) => [order, ...prev]); // Ensure order exists before setting state
                 }
                 i++;
             } else {

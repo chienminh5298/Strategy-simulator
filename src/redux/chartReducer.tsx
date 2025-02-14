@@ -6,7 +6,7 @@ const initialState: {
     duration: number;
 } = {
     data: {},
-    duration: 6,
+    duration: 5,
 };
 
 const chartSlice = createSlice({

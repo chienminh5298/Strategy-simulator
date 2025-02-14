@@ -25,9 +25,9 @@ const App = () => {
 
     useEffect(() => {
         if (isConfigCorrect) {
-            setRawData(dataStore[config.token][parseInt(config.year)]);
+            setRawData(Object.values(dataStore[config.token][parseInt(config.year)]));
         }
-    }, [isConfigCorrect]);
+    }, [isConfigCorrect, dataStore]);
 
     const [isFetchData, setIsFetchData] = useState(false);
     const dispatch = useDispatch();

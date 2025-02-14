@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const GOOGLE_APP_SCRIPT = "https://script.google.com/macros/s/AKfycbwzM3MS--g3lsezwK3wAbMrBkMPONVepz5GrYGKeqZFujE_udhP94l8_QZoNxgjXxzJ/exec?";
+const GOOGLE_APP_SCRIPT = "https://script.google.com/macros/s/AKfycbyWSobB5oTa_W6wXkIVveSl_d3BhddDqWHXCVSpncJsbV_pqlgQIvLL3JwYsNkm4s31Kg/exec?";
 const AWS_LAMBDA = "https://6zhsyas2r9.execute-api.ap-southeast-1.amazonaws.com/default/Backtest_strategy_update_data";
 
 export const fetchToken = async () => {

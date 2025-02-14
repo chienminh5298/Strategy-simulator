@@ -22,13 +22,32 @@ export type ChartCandleType = {
     };
 };
 
+const getOpenCandle = (candle: candleType) => {
+    const temp = new Date(candle.Date);
+    const year = temp.getFullYear();
+    const month = String(temp.getMonth() + 1).padStart(2, "0"); // Two-digit month
+    const day = String(temp.getDate()).padStart(2, "0"); // Two-digit day
+
+    return `${year}-${month}-${day}T00:00:00.000Z`;
+};
+const getCloseCandle = (candle: candleType) => {
+    const temp = new Date(candle.Date);
+    const year = temp.getFullYear();
+    const month = String(temp.getMonth() + 1).padStart(2, "0"); // Two-digit month
+    const day = String(temp.getDate()).padStart(2, "0"); // Two-digit day
+
+    return `${year}-${month}-${day}T23:55:00.000Z`;
+};
+
 export const backtestLogic = (data: candleType[], config: configType) => {
     let openOrder: { [orderId: number]: OrderType } = {};
     let response: ChartCandleType = {};
 
     const processCreateNewMidNightOrder = (data: candleType[], config: configType, candle: candleType, i: number) => {
-        const prevDayOpenCandle = data[i - 240];
-        const prevDayCloseCandle = data[i - 1];
+        const prevDayOpenCandle = getOpenCandle(candle);
+        const prevDayCloseCandle = getCloseCandle(candle);
+
+        console.log(prevDayOpenCandle, prevDayCloseCandle);
         const side = getNewOrderSide({ config, isTriggerOrder: false, openCandle: prevDayOpenCandle, closeCandle: prevDayCloseCandle });
         createNewOrder({ candle, entryPrice: candle.Open, isTrigger: false, side, config });
     };
@@ -97,6 +116,7 @@ export const backtestLogic = (data: candleType[], config: configType) => {
     };
 
     const getDayColor = (openCandle: candleType, closeCandle: candleType) => {
+        console.log(typeof openCandle.Open, closeCandle.Close, openCandle.Open > closeCandle.Close);
         if (openCandle.Open > closeCandle.Close) return "red";
         else return "green";
     };
@@ -110,7 +130,7 @@ export const backtestLogic = (data: candleType[], config: configType) => {
 
     const getNewOrderSide = ({ config, isTriggerOrder, openCandle, closeCandle }: GetNewOrderSideType) => {
         const prevDayCandleColor = getDayColor(openCandle, closeCandle);
-
+        console.log(prevDayCandleColor);
         if (!isTriggerOrder) {
             if (config.strategy.direction === "same") return prevDayCandleColor === "green" ? "long" : "short";
             else return prevDayCandleColor === "green" ? "short" : "long";

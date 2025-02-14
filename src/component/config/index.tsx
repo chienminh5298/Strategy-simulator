@@ -225,6 +225,7 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
             year: e.target.value,
         }));
         setConfigError(undefined);
+        refetch();
     };
 
     // Query year data
@@ -237,6 +238,10 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
         queryFn: () => fetchTokenDataByYear(config.token, config.year),
         enabled: false,
     });
+
+    useEffect(() => {
+        setIsFetchData(isLoading);
+    }, [isLoading, setIsFetchData]);
 
     useEffect(() => {
         if (yearData) {
@@ -465,9 +470,10 @@ const checkDate = (date: Date) => {
 };
 
 const getLastDate = (data: { [token: string]: any[] }) => {
-    const lastYear = Object.keys(data).pop();
-    if (lastYear) {
-        return data[lastYear][data[lastYear].length - 1].Date;
+    const thisYear = Object.keys(data).pop();
+    if (thisYear) {
+        const dataThisYear = Object.values(data[thisYear]);
+        return dataThisYear[dataThisYear.length - 1].Date;
     } else {
         return undefined;
     }
