@@ -127,7 +127,7 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
     };
 
     const { data, refetch } = useQuery({
-        queryKey: ["dataSOL"],
+        queryKey: ["data", config.token],
         queryFn: () => fetchOneTokenData(config.token),
         enabled: false, // Disable auto-fetch
     });
@@ -234,6 +234,7 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
     };
 
     let renderDataUpToDate = config.token === "" ? <Fragment></Fragment> : getLastDate(tokenData[config.token]);
+    // let renderDataUpToDate = "";
 
     return (
         <form className={styles.config} onSubmit={handleSubmit}>

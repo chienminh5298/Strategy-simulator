@@ -19,7 +19,8 @@ const dataSlice = createSlice({
     name: "data",
     initialState: initialState,
     reducers: {
-        fetchData(state, payload) {
+        fetchToken(state, payload) {
+            console.log(payload.payload)
             Object.assign(state, payload.payload);
         },
         updateData(state, payload) {

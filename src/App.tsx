@@ -5,7 +5,7 @@ import Chart from "./chart";
 import Config from "@src/component/config";
 import { Bounce, toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // Import default styles
-import { fetchTokenData } from "@src/http";
+import { fetchToken } from "@src/http";
 import { useDispatch } from "react-redux";
 import { candleType, dataActions } from "@src/redux/dataReducer";
 import { useQuery } from "@tanstack/react-query";
@@ -30,12 +30,11 @@ const App = () => {
     }, [isConfigCorrect]);
 
     const [isFetchData, setIsFetchData] = useState(false);
-    const [duration, setDuration] = useState(100);
     const dispatch = useDispatch();
 
     const { data, isLoading, isError } = useQuery({
-        queryKey: ["data"], // Unique key for caching
-        queryFn: fetchTokenData, // Function to fetch data
+        queryKey: ["token"], // Unique key for caching
+        queryFn: fetchToken, // Function to fetch data
     });
 
     useEffect(() => {
@@ -47,7 +46,7 @@ const App = () => {
 
     useEffect(() => {
         if (data && data.status === 200) {
-            dispatch(dataActions.fetchData(data.data));
+            dispatch(dataActions.fetchToken(data.data));
         }
     }, [data, dispatch]);
 
