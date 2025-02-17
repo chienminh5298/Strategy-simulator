@@ -1,0 +1,115 @@
+.container {
+    padding: 10px;
+    display: flex;
+    border: 1px solid black;
+    gap: 10px;
+    .buy {
+        color: #4bffb5;
+    }
+    .sell {
+        color: #ff4976;
+    }
+    .info {
+        flex: 1;
+        background-color: rgba(128, 128, 128, 0.2);
+        .infoPart {
+            h2 {
+                padding: 5px;
+                margin: 2px;
+                background-color: gray;
+                color: white;
+            }
+            h3 {
+                padding: 5px;
+                margin: 2px;
+                background-color: rgb(200, 200, 200);
+                color: white;
+            }
+            .content {
+                padding: 15px;
+                display: flex;
+                flex-direction: column;
+
+                .row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 2px;
+                    &:not(:last-child) {
+                        border-bottom: dashed rgba(0, 0, 0, 0.177) 1px;
+                        margin-bottom: 5px;
+                    }
+                }
+                .strategy {
+                    background-color: #f4f4f4;
+                    padding: 5px;
+                    margin: 2px;
+                    border-radius: 5px;
+                }
+            }
+        }
+    }
+    .chartsSection {
+        flex: 3;
+        background-color: rgba(128, 128, 128, 0.2);
+        overflow: hidden;
+        .chartPart {
+            h2 {
+                padding: 5px;
+                margin: 2px;
+                background-color: rgb(128, 128, 128);
+                color: white;
+            }
+            .charts {
+                width: 100%;
+                padding: 10px;
+                display: flex;
+                justify-content: center;
+                .tooltipValueOverTime {
+                    background-color: #4bffb5;
+                    border: solid 3px #4bffb5;
+                    padding: 10px;
+                    border-radius: 5px;
+                    box-shadow: 2px 2px 0px 0px black;
+                    text-align: center;
+                    p {
+                        margin: 0;
+                    }
+                    .value {
+                        font-weight: bold;
+                    }
+                }
+                .tooltipProfitMonthly {
+                    background-color: #4bffb5;
+                    border: solid 3px #4bffb5;
+                    padding: 10px;
+                    border-radius: 5px;
+                    box-shadow: 2px 2px 0px 0px black;
+                    text-align: center;
+                    p {
+                        margin: 0;
+                    }
+                    .tooltipContent {
+                        margin-top: 20px;
+                        .tooltipRow {
+                            padding: 2px 0px;
+                            margin: 5px 0px;
+                            display: flex;
+                            gap: 20px;
+                            justify-content: space-between;
+                            &:not(:last-child) {
+                                border-bottom: dashed 1px rgba(0, 0, 0, 0.23);
+                            }
+                        }
+                    }
+                    .value {
+                        font-weight: bold;
+                    }
+                }
+                .chart {
+                    flex: 1;
+                }
+            }
+        }
+    }
+}

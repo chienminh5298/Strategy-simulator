@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect, useState } from "react";
-import styles from "@src/component/tab/history.module.scss";
+import styles from "@src/component/tab/history/history.module.scss";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { useSelector } from "react-redux";

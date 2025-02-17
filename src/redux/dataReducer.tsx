@@ -10,7 +10,9 @@ export type candleType = {
 };
 export type dataType = {
     [token: string]: {
-        [year: number]: candleType[];
+        [year: number]: {
+            [date: string]: candleType;
+        };
     };
 };
 const initialState: dataType = {};

@@ -21,11 +21,11 @@ const App = () => {
     const isConfigCorrect = useSelector((state: RootState) => state.config.isConfigCorrect);
     const config = useSelector((state: RootState) => state.config.config);
     const dataStore = useSelector((state: RootState) => state.data);
-    const [rawData, setRawData] = useState<candleType[]>([]);
+    const [rawData, setRawData] = useState<{ [data: string]: candleType }>({});
 
     useEffect(() => {
         if (isConfigCorrect) {
-            setRawData(Object.values(dataStore[config.token][parseInt(config.year)]));
+            setRawData(dataStore[config.token][parseInt(config.year)]);
         }
     }, [isConfigCorrect, dataStore]);
 
