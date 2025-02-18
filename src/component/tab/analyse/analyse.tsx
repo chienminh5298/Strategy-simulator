@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Fragment } from "react";
 import styles from "@src/component/tab/analyse/analyse.module.scss";
 import { toUSD } from "@src/utils";
 import ValueOverTime from "@src/component/tab/analyse/chart/valueOverTime";
@@ -8,7 +8,36 @@ import { RootState } from "@root/src/redux/store";
 
 const AnalyseTab = () => {
     const config = useSelector((state: RootState) => state.config.config);
-    
+    const { overView, strategyBreakDown, triggerStrategyBreakDown } = useSelector((state: RootState) => state.chart.analyse);
+
+    // Render strategy & triggerStrategy
+    let renderStrategy = config.strategy.stoplosses.map((stoploss, idx) => (
+        <div className={styles.strategy} key={idx}>
+            <div className={styles.row}>
+                <div className={styles.title}>Target</div>
+                <div className={styles.value}>{stoploss.target}</div>
+            </div>
+            <div className={styles.row}>
+                <div className={styles.title}>Percent</div>
+                <div className={styles.value}>{stoploss.percent}</div>
+            </div>
+        </div>
+    ));
+
+    let renderTriggerStrategy = config.setting.isTrigger
+        ? config.triggerStrategy.stoplosses.map((stoploss, idx) => (
+              <div className={styles.strategy} key={idx}>
+                  <div className={styles.row}>
+                      <div className={styles.title}>Target</div>
+                      <div className={styles.value}>{stoploss.target}</div>
+                  </div>
+                  <div className={styles.row}>
+                      <div className={styles.title}>Percent</div>
+                      <div className={styles.value}>{stoploss.percent}</div>
+                  </div>
+              </div>
+          ))
+        : "";
     return (
         <div className={styles.container}>
             <div className={styles.info}>
@@ -17,94 +46,67 @@ const AnalyseTab = () => {
                     <div className={styles.content}>
                         <div className={styles.row}>
                             <div className={styles.title}>Token</div>
-                            <div className={styles.value}>SOLANA</div>
+                            <div className={styles.value}>{config.token}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Data year</div>
-                            <div className={styles.value}>2025</div>
+                            <div className={styles.value}>{config.year}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Keep order overnight</div>
-                            <div className={styles.value}>YES</div>
+                            <div className={`${styles.value} ${config.setting.keepOrderOverNight ? styles.buy : styles.sell}`}>{config.setting.keepOrderOverNight ? "YES" : "NO"}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Trigger strategy</div>
-                            <div className={styles.value}>YES</div>
+                            <div className={`${styles.value} ${config.setting.isTrigger ? styles.buy : styles.sell}`}>{config.setting.isTrigger ? "YES" : "NO"}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Value per order</div>
-                            <div className={styles.value}>{toUSD(30000, false)}</div>
+                            <div className={styles.value}>{toUSD(config.value, false)}</div>
                         </div>
                     </div>
                 </div>
                 <div className={styles.infoPart}>
                     <h3>Strategy</h3>
-                    <div className={styles.content}>
-                        <div className={styles.strategy}>
-                            <div className={styles.row}>
-                                <div className={styles.title}>Target</div>
-                                <div className={styles.value}>0</div>
-                            </div>
-                            <div className={styles.row}>
-                                <div className={styles.title}>Percent</div>
-                                <div className={styles.value}>-2</div>
-                            </div>
-                        </div>
-                        <div className={styles.strategy}>
-                            <div className={styles.row}>
-                                <div className={styles.title}>Target</div>
-                                <div className={styles.value}>0.7</div>
-                            </div>
-                            <div className={styles.row}>
-                                <div className={styles.title}>Percent</div>
-                                <div className={styles.value}>0.7</div>
-                            </div>
-                        </div>
+                    <div className={styles.direction}>
+                        <div className={styles.title}>Direction</div>
+                        <div className={`${styles.value} ${config.strategy.direction === "opposite" ? styles.buy : styles.sell}`}>{config.strategy.direction.toUpperCase()}</div>
                     </div>
+                    <div className={styles.content}>{renderStrategy}</div>
                 </div>
-                <div className={styles.infoPart}>
-                    <h3>Trigger strategy</h3>
-                    <div className={styles.content}>
-                        <div className={styles.strategy}>
-                            <div className={styles.row}>
-                                <div className={styles.title}>Target</div>
-                                <div className={styles.value}>0</div>
-                            </div>
-                            <div className={styles.row}>
-                                <div className={styles.title}>Percent</div>
-                                <div className={styles.value}>-2</div>
-                            </div>
+                {config.setting.isTrigger && (
+                    <div className={styles.infoPart}>
+                        <h3>Trigger strategy</h3>
+                        <div className={styles.direction}>
+                            <div className={styles.title}>Direction</div>
+                            <div className={`${styles.value} ${config.triggerStrategy.direction === "opposite" ? styles.buy : styles.sell}`}>{config.triggerStrategy.direction.toUpperCase()}</div>
                         </div>
-                        <div className={styles.strategy}>
-                            <div className={styles.row}>
-                                <div className={styles.title}>Target</div>
-                                <div className={styles.value}>0.7</div>
-                            </div>
-                            <div className={styles.row}>
-                                <div className={styles.title}>Percent</div>
-                                <div className={styles.value}>0.7</div>
-                            </div>
-                        </div>
+                        <div className={styles.content}>{renderTriggerStrategy}</div>
                     </div>
-                </div>
+                )}
+
                 <div className={styles.infoPart}>
                     <h2>Performance summary</h2>
                     <div className={styles.content}>
                         <div className={styles.row}>
                             <div className={styles.title}>Total PnL</div>
-                            <div className={styles.value}>{toUSD(30000)}</div>
+                            <div className={`${styles.value} ${overView.totalPnL > 0 ? styles.buy : styles.sell}`}>{toUSD(overView.totalPnL)}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Win rate</div>
-                            <div className={styles.value}>70% ~ {toUSD(3000, false)}</div>
+                            <div className={`${styles.value} ${styles.buy}`}>
+                                {overView.winRate.toFixed(2)}% ~ {toUSD(overView.longProfit + overView.shortProfit)}
+                            </div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Loss rate</div>
-                            <div className={styles.value}>30% ~ {toUSD(1000, false)}</div>
+                            <div className={`${styles.value} ${styles.sell}`}>
+                                {overView.lossRate.toFixed(2)}% ~ {toUSD(overView.longLoss + overView.shortLoss)}
+                            </div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Total trade</div>
-                            <div className={styles.value}>40</div>
+                            <div className={styles.value}>{overView.totalTrade}</div>
                         </div>
                     </div>
                 </div>
@@ -113,35 +115,35 @@ const AnalyseTab = () => {
                     <div className={styles.content}>
                         <div className={styles.row}>
                             <div className={styles.title}>Averange profit per trade</div>
-                            <div className={styles.value}>{toUSD(30000)}</div>
+                            <div className={`${styles.value} ${styles.buy}`}>{toUSD(overView.averangeProfit)}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Averange loss per trade</div>
-                            <div className={styles.value}>{toUSD(-3000)}</div>
+                            <div className={`${styles.value} ${styles.sell}`}>{toUSD(overView.averangeLoss)}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Long order</div>
-                            <div className={styles.value}>40</div>
+                            <div className={styles.value}>{overView.longOrder}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Long profit</div>
-                            <div className={styles.value}>{toUSD(3000)}</div>
+                            <div className={`${styles.value} ${styles.buy}`}>{toUSD(overView.longProfit)}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Long loss</div>
-                            <div className={styles.value}>{toUSD(-3000)}</div>
+                            <div className={`${styles.value} ${styles.sell}`}>{toUSD(overView.longLoss)}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Short order</div>
-                            <div className={styles.value}>40</div>
+                            <div className={styles.value}>{overView.shortOrder}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Short profit</div>
-                            <div className={styles.value}>{toUSD(3000)}</div>
+                            <div className={`${styles.value} ${styles.buy}`}>{toUSD(overView.shortProfit)}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Short loss</div>
-                            <div className={styles.value}>{toUSD(-3000)}</div>
+                            <div className={`${styles.value} ${styles.sell}`}>{toUSD(overView.shortLoss)}</div>
                         </div>
                     </div>
                 </div>
@@ -167,15 +169,19 @@ const AnalyseTab = () => {
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <div className={styles.title}>Total PnL</div>
-                                    <div className={styles.value}>{toUSD(30000)}</div>
+                                    <div className={`${styles.value} ${strategyBreakDown.totalPnL > 0 ? styles.buy : styles.sell}`}>{toUSD(strategyBreakDown.totalPnL)}</div>
                                 </div>
                                 <div className={styles.row}>
                                     <div className={styles.title}>Win rate</div>
-                                    <div className={styles.value}>70% ~ {toUSD(3000, false)}</div>
+                                    <div className={`${styles.value} ${styles.buy}`}>
+                                        {strategyBreakDown.winRate.toFixed(2)}% ~ {toUSD(strategyBreakDown.longProfit + strategyBreakDown.shortProfit)}
+                                    </div>
                                 </div>
                                 <div className={styles.row}>
                                     <div className={styles.title}>Loss rate</div>
-                                    <div className={styles.value}>30% ~ {toUSD(1000, false)}</div>
+                                    <div className={`${styles.value} ${styles.sell}`}>
+                                        {strategyBreakDown.lossRate.toFixed(2)}% ~ {toUSD(strategyBreakDown.longLoss + strategyBreakDown.shortLoss)}
+                                    </div>
                                 </div>
                             </div>
                             <h3>Target hit</h3>
@@ -201,92 +207,100 @@ const AnalyseTab = () => {
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <div className={styles.title}>Long order</div>
-                                    <div className={styles.value}>40</div>
+                                    <div className={styles.value}>{strategyBreakDown.longOrder}</div>
                                 </div>
                                 <div className={styles.row}>
                                     <div className={styles.title}>Long profit</div>
-                                    <div className={styles.value}>{toUSD(3000)}</div>
+                                    <div className={`${styles.value} ${styles.buy}`}>{toUSD(strategyBreakDown.longProfit)}</div>
                                 </div>
                                 <div className={styles.row}>
                                     <div className={styles.title}>Long loss</div>
-                                    <div className={styles.value}>{toUSD(-3000)}</div>
+                                    <div className={`${styles.value} ${styles.sell}`}>{toUSD(strategyBreakDown.longLoss)}</div>
                                 </div>
                                 <div className={styles.row}>
                                     <div className={styles.title}>Short order</div>
-                                    <div className={styles.value}>40</div>
+                                    <div className={styles.value}>{strategyBreakDown.shortOrder}</div>
                                 </div>
                                 <div className={styles.row}>
                                     <div className={styles.title}>Short profit</div>
-                                    <div className={styles.value}>{toUSD(3000)}</div>
+                                    <div className={`${styles.value} ${styles.buy}`}>{toUSD(strategyBreakDown.shortProfit)}</div>
                                 </div>
                                 <div className={styles.row}>
                                     <div className={styles.title}>Short loss</div>
-                                    <div className={styles.value}>{toUSD(-3000)}</div>
+                                    <div className={`${styles.value} ${styles.sell}`}>{toUSD(strategyBreakDown.shortLoss)}</div>
                                 </div>
                             </div>
                         </div>
                         <div className={styles.chart}>
-                            <h2>Trigger strategy</h2>
-                            <div className={styles.content}>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Total PnL</div>
-                                    <div className={styles.value}>{toUSD(30000)}</div>
-                                </div>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Win rate</div>
-                                    <div className={styles.value}>70% ~ {toUSD(3000, false)}</div>
-                                </div>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Loss rate</div>
-                                    <div className={styles.value}>30% ~ {toUSD(1000, false)}</div>
-                                </div>
-                            </div>
-                            <h3>Target hit</h3>
-                            <div className={styles.content}>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Target 0%</div>
-                                    <div className={styles.value}>40 times</div>
-                                </div>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Target 1%</div>
-                                    <div className={styles.value}>30 times</div>
-                                </div>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Target 3%</div>
-                                    <div className={styles.value}>26 times</div>
-                                </div>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Target 4%</div>
-                                    <div className={styles.value}>10 times</div>
-                                </div>
-                            </div>
-                            <h3>Break down</h3>
-                            <div className={styles.content}>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Long order</div>
-                                    <div className={styles.value}>40</div>
-                                </div>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Long profit</div>
-                                    <div className={styles.value}>{toUSD(3000)}</div>
-                                </div>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Long loss</div>
-                                    <div className={styles.value}>{toUSD(-3000)}</div>
-                                </div>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Short order</div>
-                                    <div className={styles.value}>40</div>
-                                </div>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Short profit</div>
-                                    <div className={styles.value}>{toUSD(3000)}</div>
-                                </div>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Short loss</div>
-                                    <div className={styles.value}>{toUSD(-3000)}</div>
-                                </div>
-                            </div>
+                            {config.setting.isTrigger && (
+                                <Fragment>
+                                    <h2>Trigger strategy</h2>
+                                    <div className={styles.content}>
+                                        <div className={styles.row}>
+                                            <div className={styles.title}>Total PnL</div>
+                                            <div className={`${styles.value} ${triggerStrategyBreakDown.totalPnL > 0 ? styles.buy : styles.sell}`}>{toUSD(triggerStrategyBreakDown.totalPnL)}</div>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <div className={styles.title}>Win rate</div>
+                                            <div className={`${styles.value} ${styles.buy}`}>
+                                                {triggerStrategyBreakDown.winRate.toFixed(2)}% ~ {toUSD(triggerStrategyBreakDown.longProfit + triggerStrategyBreakDown.shortProfit)}
+                                            </div>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <div className={styles.title}>Loss rate</div>
+                                            <div className={`${styles.value} ${styles.sell}`}>
+                                                {triggerStrategyBreakDown.lossRate.toFixed(2)}% ~ {toUSD(triggerStrategyBreakDown.longLoss + triggerStrategyBreakDown.shortLoss)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <h3>Target hit</h3>
+                                    <div className={styles.content}>
+                                        <div className={styles.row}>
+                                            <div className={styles.title}>Target 0%</div>
+                                            <div className={styles.value}>40 times</div>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <div className={styles.title}>Target 1%</div>
+                                            <div className={styles.value}>30 times</div>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <div className={styles.title}>Target 3%</div>
+                                            <div className={styles.value}>26 times</div>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <div className={styles.title}>Target 4%</div>
+                                            <div className={styles.value}>10 times</div>
+                                        </div>
+                                    </div>
+                                    <h3>Break down</h3>
+                                    <div className={styles.content}>
+                                        <div className={styles.row}>
+                                            <div className={styles.title}>Long order</div>
+                                            <div className={styles.value}>{triggerStrategyBreakDown.longOrder}</div>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <div className={styles.title}>Long profit</div>
+                                            <div className={`${styles.value} ${styles.buy}`}>{toUSD(triggerStrategyBreakDown.longProfit)}</div>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <div className={styles.title}>Long loss</div>
+                                            <div className={`${styles.value} ${styles.sell}`}>{toUSD(triggerStrategyBreakDown.longLoss)}</div>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <div className={styles.title}>Short order</div>
+                                            <div className={styles.value}>{triggerStrategyBreakDown.shortOrder}</div>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <div className={styles.title}>Short profit</div>
+                                            <div className={`${styles.value} ${styles.buy}`}>{toUSD(triggerStrategyBreakDown.shortProfit)}</div>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <div className={styles.title}>Short loss</div>
+                                            <div className={`${styles.value} ${styles.sell}`}>{toUSD(triggerStrategyBreakDown.shortLoss)}</div>
+                                        </div>
+                                    </div>
+                                </Fragment>
+                            )}
                         </div>
                         <div className={styles.chart}></div>
                     </div>

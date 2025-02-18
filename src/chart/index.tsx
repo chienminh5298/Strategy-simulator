@@ -4,9 +4,12 @@ import { useEffect, useRef } from "react";
 import styles from "@src/App.module.scss";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
+import { useDispatch } from "react-redux";
+import { configActions } from "../redux/configReducer";
+import { chartActions } from "../redux/chartReducer";
 
 const Chart = () => {
-    // const dispatch = useDispatch();
+    const dispatch = useDispatch();
 
     const { data, duration } = useSelector((state: RootState) => state.chart);
 
@@ -95,8 +98,12 @@ const Chart = () => {
             intervalID = setInterval(() => {
                 const update = streamingDataProvider.next();
                 const dateData = update.value;
+                if (dateData !== null && dateData.executedOrder) {
+                    dispatch(chartActions.updateHistory(dateData.executedOrder));
+                }
                 if (update.done) {
                     clearInterval(intervalID);
+                    dispatch(configActions.updateIsBacktestRunning(false));
                     return;
                 }
 

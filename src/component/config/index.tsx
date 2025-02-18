@@ -72,10 +72,10 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                     <FontAwesomeIcon icon={faTrashCan} className={styles.deleteRow} onClick={() => handleDeleteTarget("strategy", idx)} />
                 </div>
                 <div className={styles.col}>
-                    <input type="number" defaultValue={sl.target} disabled={idx === 0} step={0.1} onChange={(e) => handleTargetPercent("strategy", idx, "target", parseFloat(e.target.value))} />
+                    <input type="number" value={sl.target || 0} disabled={idx === 0} step={0.1} onChange={(e) => handleTargetPercent("strategy", idx, "target", parseFloat(e.target.value))} />
                 </div>
                 <div className={styles.col}>
-                    <input type="number" defaultValue={sl.percent} step={0.1} onChange={(e) => handleTargetPercent("strategy", idx, "percent", parseFloat(e.target.value))} />
+                    <input type="number" value={sl.percent || 0} step={0.1} onChange={(e) => handleTargetPercent("strategy", idx, "percent", parseFloat(e.target.value))} />
                 </div>
             </Fragment>
         );
@@ -88,10 +88,10 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                     <FontAwesomeIcon icon={faTrashCan} className={styles.deleteRow} onClick={() => handleDeleteTarget("triggerStrategy", idx)} />
                 </div>
                 <div className={styles.col}>
-                    <input type="number" defaultValue={sl.target} disabled={idx === 0} step={0.1} onChange={(e) => handleTargetPercent("triggerStrategy", idx, "target", parseFloat(e.target.value))} />
+                    <input type="number" value={sl.target || 0} disabled={idx === 0} step={0.1} onChange={(e) => handleTargetPercent("triggerStrategy", idx, "target", parseFloat(e.target.value))} />
                 </div>
                 <div className={styles.col}>
-                    <input type="number" defaultValue={sl.percent} step={0.1} onChange={(e) => handleTargetPercent("triggerStrategy", idx, "percent", parseFloat(e.target.value))} />
+                    <input type="number" value={sl.percent || 0} step={0.1} onChange={(e) => handleTargetPercent("triggerStrategy", idx, "percent", parseFloat(e.target.value))} />
                 </div>
             </Fragment>
         );
@@ -194,15 +194,26 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
         e.preventDefault();
         const checkCf = checkConfig(config);
         if (checkCf === undefined) {
-            setConfig(config);
+            // Sort stoploss arrays
+            const sortedStrategyStoplosses = [...config.strategy.stoplosses].sort((a, b) => a.target - b.target);
+            const sortedTriggerStoplosses = [...config.triggerStrategy.stoplosses].sort((a, b) => a.target - b.target);
+
+            const newConfig = {
+                ...config,
+                strategy: { ...config.strategy, stoplosses: sortedStrategyStoplosses },
+                triggerStrategy: { ...config.triggerStrategy, stoplosses: sortedTriggerStoplosses },
+            };
+            setConfig(newConfig); // This ensures UI re-render
+
             dispatch(configActions.updateIsConfigCorrect(true));
-            dispatch(configActions.updateConfig(config));
+            dispatch(configActions.updateConfig(newConfig)); // Use the newConfig here
             dispatch(chartActions.resetState());
+            dispatch(configActions.updateIsBacktestRunning(false));
             toast.success("Apply config successfully. You can run backtest now.");
         } else {
-            setConfigError(checkCf);
             dispatch(configActions.updateIsConfigCorrect(false));
         }
+        setConfigError(checkCf);
     };
 
     // Handle select token
@@ -445,22 +456,23 @@ const checkStrategyFn = (
         percent: number;
     }[]
 ) => {
-    // Check strategy has at lease 2 stoplosses
     if (stoplosses.length < 2) return "strategy";
-    // Check each stoploss
-    // Check for duplicate target values
+
+    const sortedStoplosses = [...stoplosses].sort((a, b) => a.target - b.target); // Create a copy and sort
+
     const targetSet = new Set<number>();
-    for (const stoploss of stoplosses) {
-        if (targetSet.has(stoploss.target)) return "strategy"; // Duplicate target found
+    for (let i = 0; i < sortedStoplosses.length; i++) {
+        const stoploss = sortedStoplosses[i];
+        if (targetSet.has(stoploss.target)) return "strategy";
         targetSet.add(stoploss.target);
 
+        // Check if not last target, percent can't === target
+        if (i < sortedStoplosses.length - 1 && stoploss.percent === stoploss.target) return "strategy";
         // Check if percent is greater than target
         if (stoploss.percent > stoploss.target) return "strategy";
     }
-    // Check first stoploss target === 0
-    if (stoplosses[0].target !== 0) return "strategy";
-    // Check last stoploss percent should === target to close order
-    const lastStoploss = stoplosses[stoplosses.length - 1];
+    if (sortedStoplosses[0].target !== 0) return "strategy";
+    const lastStoploss = sortedStoplosses[sortedStoplosses.length - 1];
     if (lastStoploss.percent !== lastStoploss.target) return "strategy";
 };
 

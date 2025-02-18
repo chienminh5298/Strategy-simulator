@@ -4,43 +4,16 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { useSelector } from "react-redux";
 import { RootState } from "@src/redux/store";
-import { OrderType } from "@src/utils/backtestLogic";
 import { convertToUTCDateTime, toUSD } from "@src/utils";
 
 const HistoryTab = () => {
-    const { data, duration } = useSelector((state: RootState) => state.chart);
-    const [visibleItems, setVisibleItems] = useState<Required<OrderType>[]>([]);
+    const visibleItems = useSelector((state: RootState) => state.chart.history);
+    const value = useSelector((state: RootState) => state.config.config.value);
     const [sum, setSum] = useState(0);
 
     useEffect(() => {
         setSum(visibleItems.reduce((acc, item) => acc + item.profit, 0));
     }, [visibleItems]);
-
-    useEffect(() => {
-        if (Object.keys(data).length === 0) {
-            setVisibleItems([]);
-        }
-        let i = 0;
-        const tempData = Object.values(data);
-
-        // Ensure interval only runs when there's data
-        if (!tempData.length) return;
-
-        const interval = setInterval(() => {
-            if (i < tempData.length) {
-                const order = tempData[i].executedOrder;
-
-                if (order) {
-                    setVisibleItems((prev) => [order, ...prev]); // Ensure order exists before setting state
-                }
-                i++;
-            } else {
-                clearInterval(interval);
-            }
-        }, duration);
-
-        return () => clearInterval(interval);
-    }, [data, duration]);
 
     const renderHistory = visibleItems.map((items, idx) => {
         return (
@@ -60,7 +33,10 @@ const HistoryTab = () => {
     return (
         <div className={styles.container}>
             <div className={styles.total}>
-                Total: <span className={sum < 0 ? styles.sell : styles.buy}>{toUSD(sum, true)}</span>
+                Total PnL:{" "}
+                <span className={sum < 0 ? styles.sell : styles.buy}>
+                    {toUSD(sum, true)} ~ {((sum * 100) / value).toFixed(2)}%
+                </span>
             </div>
             <div className={styles.table}>
                 {/* Header Row */}

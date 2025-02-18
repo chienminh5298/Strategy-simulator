@@ -13,13 +13,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRotate } from "@fortawesome/free-solid-svg-icons";
 import { useSelector } from "react-redux";
 import { RootState } from "@src/redux/store";
-import { backtestLogic } from "./utils/backtestLogic";
+import { backtestLogic, OrderType } from "./utils/backtestLogic";
 import { chartActions } from "./redux/chartReducer";
 import Tab from "@src/component/tab";
+import { processDataForAnalyse } from "./utils";
+import { configActions } from "./redux/configReducer";
 
 const App = () => {
-    const isConfigCorrect = useSelector((state: RootState) => state.config.isConfigCorrect);
-    const config = useSelector((state: RootState) => state.config.config);
+    const { isConfigCorrect, config, isBacktestRunning } = useSelector((state: RootState) => state.config);
     const dataStore = useSelector((state: RootState) => state.data);
     const [rawData, setRawData] = useState<{ [data: string]: candleType }>({});
 
@@ -54,7 +55,12 @@ const App = () => {
     const handleRun = () => {
         if (isConfigCorrect) {
             const chartData = backtestLogic(rawData, config);
-            dispatch(chartActions.updateData(chartData));
+            let executedOrders = Object.values(chartData)
+                .filter((order) => order.executedOrder !== undefined)
+                .map((order) => order.executedOrder!);
+            dispatch(chartActions.resetState());
+            dispatch(configActions.updateIsBacktestRunning(true));
+            dispatch(chartActions.updateData({ data: chartData, analyse: executedOrders }));
         }
     };
 
@@ -74,7 +80,7 @@ const App = () => {
                 <div className={styles.chart}>
                     <header className={styles.frameHeader}>Live chart</header>
                     <div className={styles.container}>
-                        <button className={styles.runButton} disabled={!isConfigCorrect} onClick={handleRun}>
+                        <button className={styles.runButton} disabled={!isConfigCorrect || isBacktestRunning} onClick={handleRun}>
                             Run backtest
                         </button>
                         <Chart />

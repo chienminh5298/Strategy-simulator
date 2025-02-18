@@ -2,21 +2,8 @@ import React from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import styles from "@src/component/tab/analyse/analyse.module.scss";
 import { toUSD } from "@src/utils";
-
-const data = [
-    { month: "January", total: 4589, profit: 6724, loss: 3156 },
-    { month: "February", total: 8792, profit: 8532, loss: 4297 },
-    { month: "March", total: 6721, profit: 2345, loss: 7890 },
-    { month: "April", total: 2156, profit: 9123, loss: 1784 },
-    { month: "May", total: 9834, profit: 6745, loss: 3452 },
-    { month: "June", total: 5412, profit: 4983, loss: 8623 },
-    { month: "July", total: 7891, profit: 3456, loss: 7290 },
-    { month: "August", total: 3058, profit: 8921, loss: 1245 },
-    { month: "September", total: 6283, profit: 7634, loss: 5321 },
-    { month: "October", total: 4567, profit: 2189, loss: 9034 },
-    { month: "November", total: 7348, profit: 5423, loss: 6789 },
-    { month: "December", total: 8123, profit: 6781, loss: 3214 },
-];
+import { useSelector } from "react-redux";
+import { RootState } from "@root/src/redux/store";
 
 const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -30,11 +17,11 @@ const CustomTooltip = ({ active, payload, label }) => {
                     </div>
                     <div className={styles.tooltipRow}>
                         <p className={styles.title}>Profit</p>
-                        <p className={styles.value}>{toUSD(payload[1].value)}</p>
+                        <p className={`${styles.value} ${styles.buy}`}>{toUSD(payload[1].value)}</p>
                     </div>
                     <div className={styles.tooltipRow}>
                         <p className={styles.title}>Loss</p>
-                        <p className={styles.value}>{toUSD(payload[2].value)}</p>
+                        <p className={`${styles.value} ${styles.sell}`}>{toUSD(payload[2].value * -1)}</p>
                     </div>
                 </div>
             </div>
@@ -45,6 +32,8 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const ValueByMonth = () => {
+    const data = useSelector((state: RootState) => state.chart.analyse.profitByMonthlyChart);
+
     return (
         <ResponsiveContainer width="90%" height={250}>
             <BarChart data={data}>

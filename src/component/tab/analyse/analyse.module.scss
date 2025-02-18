@@ -4,7 +4,7 @@
     border: 1px solid black;
     gap: 10px;
     .buy {
-        color: #4bffb5;
+        color: #35a074;
     }
     .sell {
         color: #ff4976;
@@ -13,6 +13,11 @@
         flex: 1;
         background-color: rgba(128, 128, 128, 0.2);
         .infoPart {
+            .direction{
+                display: flex;
+                justify-content: space-between;
+                padding: 15px;
+            }
             h2 {
                 padding: 5px;
                 margin: 2px;

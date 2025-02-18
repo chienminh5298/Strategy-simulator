@@ -6,7 +6,7 @@ import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 const PleaseRunBacktest = () => {
     return (
         <div className={styles.pleaseRunBacktest}>
-            <p>Don't have data. Please run backtest.</p>
+            <p>Don't have data, please run backtest. Or wait for backtest done.</p>
             <FontAwesomeIcon icon={faExclamationTriangle} className={styles.icon} />
         </div>
     );
