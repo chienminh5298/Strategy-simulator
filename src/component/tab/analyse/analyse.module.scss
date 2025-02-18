@@ -60,11 +60,18 @@
                 background-color: rgb(128, 128, 128);
                 color: white;
             }
+            h3 {
+                padding: 5px;
+                margin: 2px;
+                background-color: rgb(200, 200, 200);
+                color: white;
+            }
             .charts {
                 width: 100%;
                 padding: 10px;
                 display: flex;
                 justify-content: center;
+                gap: 10px;
                 .tooltipValueOverTime {
                     background-color: #4bffb5;
                     border: solid 3px #4bffb5;
@@ -108,6 +115,18 @@
                 }
                 .chart {
                     flex: 1;
+                    .content {
+                        display: flex;
+                        flex-direction: column;
+                        .row {
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 2px;
+                            &:not(:last-child){
+                                border-bottom: dashed 1px rgba(0, 0, 0, 0.23);
+                            }
+                        }
+                    }
                 }
             }
         }

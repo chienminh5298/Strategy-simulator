@@ -2,19 +2,28 @@ import React, { useEffect, useState } from "react";
 import styles from "@src/App.module.scss";
 import HistoryTab from "@src/component/tab/history/history";
 import AnalyseTab from "@src/component/tab/analyse/analyse";
+import { useSelector } from "react-redux";
+import { RootState } from "@src/redux/store";
+import PleaseRunBacktest from "@src/component/tab/pleaseRunBacktest";
 
 const Tab = () => {
-    const [tab, setTab] = useState(<AnalyseTab />);
+    const [tab, setTab] = useState(<HistoryTab />);
+    const dataChart = useSelector((state: RootState) => state.chart.data);
 
     const handleTab = (tabName: string) => {
         switch (tabName) {
             case "analyse":
-                setTab(<AnalyseTab />);
+                if (Object.keys(dataChart).length === 0) {
+                    setTab(<PleaseRunBacktest />);
+                } else {
+                    setTab(<AnalyseTab />);
+                }
                 break;
             default:
                 setTab(<HistoryTab />);
         }
     };
+
     return (
         <div className={styles.board}>
             <header className={styles.frameHeader}>

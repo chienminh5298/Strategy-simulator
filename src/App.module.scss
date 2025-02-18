@@ -417,5 +417,18 @@
                 }
             }
         }
+        .pleaseRunBacktest {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px;
+            border: black solid 1px;
+            font-weight: bold;
+            .icon {
+                color: red;
+                font-size: 20px;
+            }
+        }
     }
 }

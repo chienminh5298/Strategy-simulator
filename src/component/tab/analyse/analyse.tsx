@@ -3,9 +3,12 @@ import styles from "@src/component/tab/analyse/analyse.module.scss";
 import { toUSD } from "@src/utils";
 import ValueOverTime from "@src/component/tab/analyse/chart/valueOverTime";
 import ValueByMonth from "@src/component/tab/analyse/chart/valueByMonth";
-import WinLoss from "./chart/winLoss";
+import { useSelector } from "react-redux";
+import { RootState } from "@root/src/redux/store";
 
 const AnalyseTab = () => {
+    const config = useSelector((state: RootState) => state.config.config);
+    
     return (
         <div className={styles.container}>
             <div className={styles.info}>
@@ -30,7 +33,7 @@ const AnalyseTab = () => {
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Value per order</div>
-                            <div className={styles.value}>{toUSD(30000)}</div>
+                            <div className={styles.value}>{toUSD(30000, false)}</div>
                         </div>
                     </div>
                 </div>
@@ -157,12 +160,135 @@ const AnalyseTab = () => {
                     </div>
                 </div>
                 <div className={styles.chartPart}>
-                    <h2>Trade break down</h2>
+                    <h2>Strategy & trigger strategy</h2>
                     <div className={styles.charts}>
                         <div className={styles.chart}>
-                            <WinLoss />
+                            <h2>Strategy</h2>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Total PnL</div>
+                                    <div className={styles.value}>{toUSD(30000)}</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Win rate</div>
+                                    <div className={styles.value}>70% ~ {toUSD(3000, false)}</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Loss rate</div>
+                                    <div className={styles.value}>30% ~ {toUSD(1000, false)}</div>
+                                </div>
+                            </div>
+                            <h3>Target hit</h3>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Target 0%</div>
+                                    <div className={styles.value}>40 times</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Target 1%</div>
+                                    <div className={styles.value}>30 times</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Target 3%</div>
+                                    <div className={styles.value}>26 times</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Target 4%</div>
+                                    <div className={styles.value}>10 times</div>
+                                </div>
+                            </div>
+                            <h3>Break down</h3>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Long order</div>
+                                    <div className={styles.value}>40</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Long profit</div>
+                                    <div className={styles.value}>{toUSD(3000)}</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Long loss</div>
+                                    <div className={styles.value}>{toUSD(-3000)}</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Short order</div>
+                                    <div className={styles.value}>40</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Short profit</div>
+                                    <div className={styles.value}>{toUSD(3000)}</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Short loss</div>
+                                    <div className={styles.value}>{toUSD(-3000)}</div>
+                                </div>
+                            </div>
                         </div>
-                        <div className={styles.chart}>a</div>
+                        <div className={styles.chart}>
+                            <h2>Trigger strategy</h2>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Total PnL</div>
+                                    <div className={styles.value}>{toUSD(30000)}</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Win rate</div>
+                                    <div className={styles.value}>70% ~ {toUSD(3000, false)}</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Loss rate</div>
+                                    <div className={styles.value}>30% ~ {toUSD(1000, false)}</div>
+                                </div>
+                            </div>
+                            <h3>Target hit</h3>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Target 0%</div>
+                                    <div className={styles.value}>40 times</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Target 1%</div>
+                                    <div className={styles.value}>30 times</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Target 3%</div>
+                                    <div className={styles.value}>26 times</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Target 4%</div>
+                                    <div className={styles.value}>10 times</div>
+                                </div>
+                            </div>
+                            <h3>Break down</h3>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Long order</div>
+                                    <div className={styles.value}>40</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Long profit</div>
+                                    <div className={styles.value}>{toUSD(3000)}</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Long loss</div>
+                                    <div className={styles.value}>{toUSD(-3000)}</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Short order</div>
+                                    <div className={styles.value}>40</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Short profit</div>
+                                    <div className={styles.value}>{toUSD(3000)}</div>
+                                </div>
+                                <div className={styles.row}>
+                                    <div className={styles.title}>Short loss</div>
+                                    <div className={styles.value}>{toUSD(-3000)}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={styles.chart}></div>
                     </div>
                 </div>
             </div>
