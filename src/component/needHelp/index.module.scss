@@ -1,0 +1,23 @@
+.bottom_left {
+    top: 120%;
+    right: 120%;
+}
+
+.bottom_right {
+    top: 120%;
+    left: 120%;
+}
+
+.helpContainer {
+    position: absolute;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: rgb(255, 255, 255);
+    z-index: 3; 
+    border: black dashed 1px;
+    box-shadow: 2px 2px 0px 2px yellow;
+    .helpBox {
+        width: 250px;
+        text-align: center;
+    }
+}

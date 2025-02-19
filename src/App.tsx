@@ -1,23 +1,23 @@
-import React, { Fragment, useEffect, useState } from "react";
-import styles from "@src/App.module.scss";
-import Chart from "./chart";
-
-import Config from "@src/component/config";
-import { Bounce, toast, ToastContainer } from "react-toastify";
+import { useDispatch, useSelector } from "react-redux";
 import "react-toastify/dist/ReactToastify.css"; // Import default styles
-import { fetchToken } from "@src/http";
-import { useDispatch } from "react-redux";
-import { candleType, dataActions } from "@src/redux/dataReducer";
 import { useQuery } from "@tanstack/react-query";
+import React, { Fragment, useEffect, useState } from "react";
+import { Bounce, toast, ToastContainer } from "react-toastify";
+
+import Chart from "@src/chart";
+import styles from "@src/App.module.scss";
+import helpStyles from "@src/component/needHelp/index.module.scss";
+import Config from "@src/component/config";
+import { fetchToken } from "@src/http";
+import { candleType, dataActions } from "@src/redux/dataReducer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRotate } from "@fortawesome/free-solid-svg-icons";
-import { useSelector } from "react-redux";
+import { faArrowRight, faRotate } from "@fortawesome/free-solid-svg-icons";
 import { RootState } from "@src/redux/store";
-import { backtestLogic, OrderType } from "./utils/backtestLogic";
-import { chartActions } from "./redux/chartReducer";
+import { backtestLogic, OrderType } from "@src/utils/backtestLogic";
+import { chartActions } from "@src/redux/chartReducer";
 import Tab from "@src/component/tab";
-import { processDataForAnalyse } from "./utils";
 import { configActions } from "./redux/configReducer";
+import NeedHelp from "@src/component/needHelp";
 
 const App = () => {
     const { isConfigCorrect, config, isBacktestRunning } = useSelector((state: RootState) => state.config);
@@ -66,23 +66,36 @@ const App = () => {
 
     return (
         <div className={styles.wrapper}>
-            {isFetchData && (
+            <div className={styles.helpContainer}>
+                <div className={styles.nextButton}>
+                    <span>Next</span>
+                    <FontAwesomeIcon icon={faArrowRight} />
+                </div>
+            </div>
+            {/* {isFetchData && (
                 <div className={styles.loading}>
                     <div className={styles.content}>
                         <FontAwesomeIcon icon={faRotate} className={styles.loadingIcon} />
                         Fetching data ...
                     </div>
                 </div>
-            )}
+            )} */}
             <ToastContainer position="top-center" autoClose={false} newestOnTop={false} closeOnClick={false} rtl={false} pauseOnFocusLoss draggable={false} theme="light" transition={Bounce} />
             <div className={styles.configAndChart}>
                 <Config setIsFetchData={setIsFetchData} />
                 <div className={styles.chart}>
                     <header className={styles.frameHeader}>Live chart</header>
                     <div className={styles.container}>
-                        <button className={styles.runButton} disabled={!isConfigCorrect || isBacktestRunning} onClick={handleRun}>
-                            Run backtest
-                        </button>
+                        <div className={styles.buttonContainer}>
+                            <NeedHelp position="bottom-left">
+                                <div className={helpStyles.helpBox}>
+                                    <div className={helpStyles.helpRunButton}>After apply config, press button to run!</div>
+                                </div>
+                            </NeedHelp>
+                            <button className={styles.runButton} disabled={!isConfigCorrect || isBacktestRunning} onClick={handleRun}>
+                                Run backtest
+                            </button>
+                        </div>
                         <Chart />
                     </div>
                 </div>

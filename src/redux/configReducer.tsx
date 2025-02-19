@@ -14,7 +14,7 @@ const initialState: {
         value: 500,
         setting: {
             keepOrderOverNight: false,
-            isTrigger: false,
+            isTrigger: true,
         },
         strategy: {
             direction: "opposite",
