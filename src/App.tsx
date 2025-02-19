@@ -29,7 +29,7 @@ const App = () => {
         if (isConfigCorrect) {
             setRawData(dataStore[config.token][parseInt(config.year)]);
         }
-    }, [isConfigCorrect, dataStore]);
+    }, [isConfigCorrect, dataStore, config]);
 
     const [isFetchData, setIsFetchData] = useState(false);
     const dispatch = useDispatch();

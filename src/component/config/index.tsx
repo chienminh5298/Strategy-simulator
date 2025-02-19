@@ -54,6 +54,7 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
     const storeConfig = useSelector((state: RootState) => state.config.config);
     const [config, setConfig] = useState<configType>(storeConfig);
 
+    console.log("config", storeConfig);
     let renderTokens = Object.keys(tokenData).map((token, idx) => (
         <option key={idx} value={token}>
             {token}
@@ -208,7 +209,6 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                 triggerStrategy: { ...config.triggerStrategy, stoplosses: sortedTriggerStoplosses },
             };
             setConfig(newConfig); // This ensures UI re-render
-
             dispatch(configActions.updateIsConfigCorrect(true));
             dispatch(configActions.updateConfig(newConfig)); // Use the newConfig here
             dispatch(chartActions.resetState());
@@ -240,7 +240,6 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
             year: e.target.value,
         }));
         setConfigError(undefined);
-        refetch();
     };
 
     // Query year data

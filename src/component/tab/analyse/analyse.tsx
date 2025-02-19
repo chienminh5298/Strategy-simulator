@@ -184,7 +184,7 @@ const AnalyseTab = () => {
                                     </div>
                                 </div>
                             </div>
-                            <h3>Target hit</h3>
+                            {/* <h3>Target hit</h3>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <div className={styles.title}>Target 0%</div>
@@ -202,7 +202,7 @@ const AnalyseTab = () => {
                                     <div className={styles.title}>Target 4%</div>
                                     <div className={styles.value}>10 times</div>
                                 </div>
-                            </div>
+                            </div> */}
                             <h3>Break down</h3>
                             <div className={styles.content}>
                                 <div className={styles.row}>
@@ -253,7 +253,7 @@ const AnalyseTab = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <h3>Target hit</h3>
+                                    {/* <h3>Target hit</h3>
                                     <div className={styles.content}>
                                         <div className={styles.row}>
                                             <div className={styles.title}>Target 0%</div>
@@ -271,7 +271,7 @@ const AnalyseTab = () => {
                                             <div className={styles.title}>Target 4%</div>
                                             <div className={styles.value}>10 times</div>
                                         </div>
-                                    </div>
+                                    </div> */}
                                     <h3>Break down</h3>
                                     <div className={styles.content}>
                                         <div className={styles.row}>
