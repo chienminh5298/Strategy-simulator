@@ -81,7 +81,13 @@ const App = () => {
                             <div className={helpStyles.content}>
                                 <span>Welcome to the Strategy Simulator! 🚀 Test, optimize, and refine your trading strategies with ease.</span>
                                 <span>This system is designed for scalping trades, collecting real-time data from Binance.com and utilizing 5-minute candlestick charts. It ensures an accuracy rate of up to 90% for backtesting your trading strategies.</span>
-                                <span>If you find this tool helpful, please consider giving it a ⭐ on GitHub: [GitHub Link]. Your support helps improve and expand the system!</span>
+                                <span>
+                                    If you find this tool helpful, please consider giving it a ⭐ on GitHub:{" "}
+                                    <a target="_blank" href="https://github.com/chienminh5298/strategy-simulator">
+                                        [Github URL]
+                                    </a>
+                                    . Your support helps improve and expand the system!
+                                </span>
                                 <span>Happy trading! 🚀</span>
                             </div>
                         </div>

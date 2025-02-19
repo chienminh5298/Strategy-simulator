@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "homepage": "https://chienminh5298.github.io/strategy-simulator",
     "@fortawesome/fontawesome-svg-core": "^6.4.0",
     "@fortawesome/free-regular-svg-icons": "^6.4.0",
     "@fortawesome/free-solid-svg-icons": "^6.4.0",
@@ -69,6 +70,7 @@
     "@types/yup": "^0.32.0",
     "css-loader": "^6.8.1",
     "file-loader": "^6.2.0",
+    "gh-pages": "^6.3.0",
     "html-webpack-plugin": "^5.5.3",
     "jwt-decode": "^3.1.2",
     "mini-css-extract-plugin": "^2.7.6",
