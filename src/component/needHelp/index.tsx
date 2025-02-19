@@ -3,7 +3,7 @@ import styles from "@src/component/needHelp/index.module.scss";
 
 interface NeedHelpProps {
     children: ReactNode;
-    position: "top-right" | "top-left" | "bottom-right" | "bottom-left";
+    position: "top-right" | "top-left" | "bottom-right" | "bottom-left" | "middle-right" | "middle-left";
 }
 
 const NeedHelp: React.FC<NeedHelpProps> = ({ children, position }) => {
@@ -17,6 +17,9 @@ const NeedHelp: React.FC<NeedHelpProps> = ({ children, position }) => {
             break;
         case "bottom-right":
             className = styles.bottom_right;
+            break;
+        case "middle-right":
+            className = styles.middle_right;
             break;
         default:
             className = styles.bottom_left;

@@ -24,6 +24,7 @@ const Tab = () => {
                 break;
             default:
                 setTab(<HistoryTab />);
+                setDefaultChecked("history")
         }
     };
 

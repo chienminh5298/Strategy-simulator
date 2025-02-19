@@ -85,7 +85,7 @@
             display: flex;
             flex-direction: column;
             border: black solid 1px;
-
+            position: relative;
             .content {
                 padding: 10px;
                 .token .row {
@@ -355,7 +355,7 @@
                 display: flex;
                 justify-content: space-between;
                 padding: 0px 10px 10px 10px;
-
+                position: relative;
                 .needHelp,
                 .saveButton {
                     border: black solid 1px;

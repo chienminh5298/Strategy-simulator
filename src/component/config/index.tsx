@@ -1,19 +1,22 @@
 import React, { Dispatch, Fragment, SetStateAction, useEffect, useState } from "react";
+import { faBook, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
+import { fetchTokenDataByYear, mutationUpdateData } from "@src/http";
+import helpStyles from "@src/component/needHelp/index.module.scss";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { errorMessage } from "@src/component/config/errorMessage";
 import { faTrashCan } from "@fortawesome/free-regular-svg-icons";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { needHelpActions } from "@src/redux/needHelpReducer";
+import { configActions } from "@src/redux/configReducer";
 import CurrencyInput from "react-currency-input-field";
+import { useDispatch, useSelector } from "react-redux";
+import { chartActions } from "@src/redux/chartReducer";
+import { dataActions } from "@src/redux/dataReducer";
+import { convertToUTCDateTime } from "@src/utils";
+import NeedHelp from "@src/component/needHelp";
+import { RootState } from "@src/redux/store";
 import styles from "@src/App.module.scss";
 import { toast } from "react-toastify";
-import { errorMessage } from "@src/component/config/errorMessage";
-import { useSelector } from "react-redux";
-import { RootState } from "@src/redux/store";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { fetchTokenDataByYear, mutationUpdateData } from "@src/http";
-import { convertToUTCDateTime } from "@src/utils";
-import { useDispatch } from "react-redux";
-import { dataActions } from "@src/redux/dataReducer";
-import { configActions } from "@src/redux/configReducer";
-import { chartActions } from "@src/redux/chartReducer";
 
 export type StoplossType = {
     target: number;
@@ -43,6 +46,7 @@ type ConfigProps = {
 };
 
 const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
+    const { isShowNeedHelp, step } = useSelector((state: RootState) => state.needHelp);
     const dispatch = useDispatch();
     const [dataUpToDate, setDataUpToDate] = useState(false);
     const [configError, setConfigError] = useState<undefined | "token" | "year" | "value" | "strategy" | "triggerStrategy">(undefined);
@@ -273,6 +277,60 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
 
     return (
         <form className={styles.config} onSubmit={handleSubmit}>
+            {isShowNeedHelp && step === 1 && (
+                <NeedHelp position="top-right">
+                    <div className={helpStyles.helpConfig}>
+                        <div className={helpStyles.title}>
+                            <FontAwesomeIcon icon={faBook} className={helpStyles.icon} />
+                            <h3>How to setup configuration</h3>
+                        </div>
+                        <div className={helpStyles.content}>
+                            <ul>
+                                <li>Select the token.</li>
+                                <li>Select data year.</li>
+                                <li>Enter budget for each order.</li>
+                            </ul>
+                        </div>
+                        <div className={helpStyles.title}>
+                            <FontAwesomeIcon icon={faQuestionCircle} className={helpStyles.icon} />
+                            <h3>What is "Keep over night"</h3>
+                        </div>
+                        <div className={helpStyles.content}>
+                            <span>This is a scalping trade system, so it will close the old order and open a new one every midnight. If 'Keep Overnight' is turned on, instead of closing the old order, the system will keep it open until it hits the stop loss or the last target.</span>
+                        </div>
+                        <div className={helpStyles.title}>
+                            <FontAwesomeIcon icon={faQuestionCircle} className={helpStyles.icon} />
+                            <h3>What is "Trigger strategy"</h3>
+                        </div>
+                        <div className={helpStyles.content}>
+                            <span>The trigger strategy is a strategy that will be triggered immediately when the strategy hits the last target. If you don’t need it, you can delete it.</span>
+                        </div>
+                        <div className={helpStyles.title}>
+                            <FontAwesomeIcon icon={faQuestionCircle} className={helpStyles.icon} />
+                            <h3>What is "Direction"</h3>
+                        </div>
+                        <div className={helpStyles.content}>
+                            <ul>
+                                <li>The 'Direction' of the strategy is compared to the previous daily candle. For example, if 'Direction' is set to 'Opposite' and the previous daily candle is red (price decreased), the system will open a 'Long' position.</li>
+                                <li>The 'Direction' of the trigger strategy is the same as the 'Direction' of the strategy, but it is compared to the strategy instead of the daily candle.</li>
+                            </ul>
+                        </div>
+                        <div className={helpStyles.title}>
+                            <FontAwesomeIcon icon={faQuestionCircle} className={helpStyles.icon} />
+                            <h3>Target & percent</h3>
+                        </div>
+                        <div className={helpStyles.content}>
+                            <ul>
+                                <li>"If the price hits the target, a stop loss will be set. For example, if the target is 2% and the stop loss percentage is 1%, it means that when the price increases by 2%, a stop loss will be set at 1%.</li>
+                                <li>Target is unique.</li>
+                                <li>Default target is set at 0 (entry).</li>
+                                <li>Percent always smaller than target.</li>
+                                <li>Just only last target, percent has to be equal target.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </NeedHelp>
+            )}
             <header className={styles.frameHeader}>Config</header>
             <div className={styles.content}>
                 <div className={`${styles.token} ${configError === "token" && styles.errorForm}`}>
@@ -312,7 +370,7 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                     </select>
                 </div>
                 <div className={`${styles.investAmount} ${configError === "value" && styles.errorForm}`}>
-                    <header>Value per order:</header>
+                    <header>Budget per order:</header>
                     <CurrencyInput
                         id="budget"
                         name="budget"
@@ -425,7 +483,16 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                 )}
             </div>
             <footer>
-                <div className={styles.needHelp}>Need help ?</div>
+                {isShowNeedHelp && step === 2 && (
+                    <NeedHelp position="top-right">
+                        <div className={helpStyles.helpApplyButton}>
+                            <span>You have to apply config to save it.</span>
+                        </div>
+                    </NeedHelp>
+                )}
+                <div className={styles.needHelp} onClick={() => dispatch(needHelpActions.showNeedHelp())}>
+                    Need help ?
+                </div>
                 <button type="submit" className={styles.saveButton}>
                     Apply config
                 </button>

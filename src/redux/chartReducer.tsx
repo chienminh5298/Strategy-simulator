@@ -1,6 +1,6 @@
-import { createSlice } from "@reduxjs/toolkit";
-import { ChartCandleType, OrderType } from "@src/utils/backtestLogic";
 import { OverViewType, processDataForAnalyse, ProfitByMonthlyChartType, StrategyBreakDownType, ValueOverTimeChartType } from "@src/utils";
+import { ChartCandleType, OrderType } from "@src/utils/backtestLogic";
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialAnalyse = {
     profitByMonthlyChart: [],

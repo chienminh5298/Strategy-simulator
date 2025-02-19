@@ -1,4 +1,4 @@
-import { OrderType } from "./backtestLogic";
+import { OrderType } from "@src/utils/backtestLogic";
 
 export function convertToUTCDateTime(isoString: string) {
     // Create a Date object from the ISO string

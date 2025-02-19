@@ -1,5 +1,5 @@
-import { createSlice } from "@reduxjs/toolkit";
 import { configType } from "@src/component/config";
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState: {
     isConfigCorrect: boolean;

@@ -1,8 +1,8 @@
-import { configureStore } from "@reduxjs/toolkit";
-import dataReducer from "@src/redux/dataReducer";
 import configReducer from "@src/redux/configReducer";
 import chartReducer from "@src/redux/chartReducer";
 import needHelp from "@src/redux/needHelpReducer";
+import { configureStore } from "@reduxjs/toolkit";
+import dataReducer from "@src/redux/dataReducer";
 
 const store = configureStore({
     reducer: {
