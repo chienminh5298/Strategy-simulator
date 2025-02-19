@@ -54,7 +54,6 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
     const storeConfig = useSelector((state: RootState) => state.config.config);
     const [config, setConfig] = useState<configType>(storeConfig);
 
-    console.log("config", storeConfig);
     let renderTokens = Object.keys(tokenData).map((token, idx) => (
         <option key={idx} value={token}>
             {token}

@@ -1,4 +1,5 @@
 import { OrderType } from "@src/utils/backtestLogic";
+import { configType } from "@src/component/config";
 
 export function convertToUTCDateTime(isoString: string) {
     // Create a Date object from the ISO string
@@ -57,12 +58,7 @@ export type StrategyBreakDownType = {
     shortOrder: number;
     shortProfit: number;
     shortLoss: number;
-    targetHit: {
-        [target: string]: {
-            target: number;
-            hitTimes: number;
-        };
-    };
+    targetHit: number[];
 };
 
 function processValueOverTimeData(orders: Required<OrderType>[]) {
@@ -177,7 +173,7 @@ function processProfitByMonthlyData(orders: Required<OrderType>[]) {
     return Object.values(initialData);
 }
 
-export const processDataForAnalyse = (orders: Required<OrderType>[]) => {
+export const processDataForAnalyse = (orders: Required<OrderType>[], config: configType) => {
     processValueOverTimeData(orders);
     const proftOrders = orders.filter((order) => order.profit > 0);
     const lossOrders = orders.filter((order) => order.profit < 0);
@@ -222,6 +218,19 @@ export const processDataForAnalyse = (orders: Required<OrderType>[]) => {
     const strategyOrders = orders.filter((order) => order.isTrigger === false);
     const triggerStrategyOrders = orders.filter((order) => order.isTrigger === true);
 
+    let countHitTargetStrategy: number[] = Array(config.strategy.stoplosses.length).fill(0);
+    strategyOrders.forEach((order) => {
+        for (let i = 0; i <= order.stoplossIdx; i++) {
+            countHitTargetStrategy[i]++;
+        }
+    });
+    let countHitTargetTriggerStrategy: number[] = Array(config.triggerStrategy.stoplosses.length).fill(0);
+    triggerStrategyOrders.forEach((order) => {
+        for (let i = 0; i <= order.stoplossIdx; i++) {
+            countHitTargetTriggerStrategy[i]++;
+        }
+    });
+
     let strategyBreakDown: StrategyBreakDownType = {
         totalPnL: strategyOrders.reduce((total, order) => total + order.profit, 0),
         winRate: (strategyOrders.filter((order) => order.profit > 0).length * 100) / strategyOrders.length,
@@ -244,7 +253,7 @@ export const processDataForAnalyse = (orders: Required<OrderType>[]) => {
             if (order.side === "short" && order.profit < 0) return total + order.profit;
             else return total;
         }, 0),
-        targetHit: {},
+        targetHit: countHitTargetStrategy,
     };
     let triggerStrategyBreakDown: StrategyBreakDownType = {
         totalPnL: triggerStrategyOrders.reduce((total, order) => total + order.profit, 0),
@@ -268,7 +277,7 @@ export const processDataForAnalyse = (orders: Required<OrderType>[]) => {
             if (order.side === "short" && order.profit < 0) return total + order.profit;
             else return total;
         }, 0),
-        targetHit: {},
+        targetHit: countHitTargetTriggerStrategy,
     };
 
     return { overView, ValueOverTimeChart, profitByMonthlyChart, strategyBreakDown, triggerStrategyBreakDown };

@@ -10,7 +10,7 @@ const AnalyseTab = () => {
     const config = useSelector((state: RootState) => state.config.config);
     const { overView, strategyBreakDown, triggerStrategyBreakDown } = useSelector((state: RootState) => state.chart.analyse);
 
-    // Render strategy & triggerStrategy
+    // Render configuration strategy & triggerStrategy
     let renderStrategy = config.strategy.stoplosses.map((stoploss, idx) => (
         <div className={styles.strategy} key={idx}>
             <div className={styles.row}>
@@ -38,6 +38,20 @@ const AnalyseTab = () => {
               </div>
           ))
         : "";
+
+    // Render breakdown strategy & trigger strategy target hit times
+    let strategyHitTimes = config.strategy.stoplosses.map((stoploss, idx) => (
+        <div className={styles.row} key={idx}>
+            <div className={styles.title}>Target {stoploss.target}%</div>
+            <div className={styles.value}>{strategyBreakDown.targetHit[idx]} times</div>
+        </div>
+    ));
+    let triggerStrategyHitTimes = config.triggerStrategy.stoplosses.map((stoploss, idx) => (
+        <div className={styles.row} key={idx}>
+            <div className={styles.title}>Target {stoploss.target}%</div>
+            <div className={styles.value}>{triggerStrategyBreakDown.targetHit[idx]} times</div>
+        </div>
+    ));
     return (
         <div className={styles.container}>
             <div className={styles.info}>
@@ -184,25 +198,8 @@ const AnalyseTab = () => {
                                     </div>
                                 </div>
                             </div>
-                            {/* <h3>Target hit</h3>
-                            <div className={styles.content}>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Target 0%</div>
-                                    <div className={styles.value}>40 times</div>
-                                </div>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Target 1%</div>
-                                    <div className={styles.value}>30 times</div>
-                                </div>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Target 3%</div>
-                                    <div className={styles.value}>26 times</div>
-                                </div>
-                                <div className={styles.row}>
-                                    <div className={styles.title}>Target 4%</div>
-                                    <div className={styles.value}>10 times</div>
-                                </div>
-                            </div> */}
+                            <h3>Target hit</h3>
+                            <div className={styles.content}>{strategyHitTimes}</div>
                             <h3>Break down</h3>
                             <div className={styles.content}>
                                 <div className={styles.row}>
@@ -253,25 +250,8 @@ const AnalyseTab = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    {/* <h3>Target hit</h3>
-                                    <div className={styles.content}>
-                                        <div className={styles.row}>
-                                            <div className={styles.title}>Target 0%</div>
-                                            <div className={styles.value}>40 times</div>
-                                        </div>
-                                        <div className={styles.row}>
-                                            <div className={styles.title}>Target 1%</div>
-                                            <div className={styles.value}>30 times</div>
-                                        </div>
-                                        <div className={styles.row}>
-                                            <div className={styles.title}>Target 3%</div>
-                                            <div className={styles.value}>26 times</div>
-                                        </div>
-                                        <div className={styles.row}>
-                                            <div className={styles.title}>Target 4%</div>
-                                            <div className={styles.value}>10 times</div>
-                                        </div>
-                                    </div> */}
+                                    <h3>Target hit</h3>
+                                    <div className={styles.content}>{triggerStrategyHitTimes}</div>
                                     <h3>Break down</h3>
                                     <div className={styles.content}>
                                         <div className={styles.row}>

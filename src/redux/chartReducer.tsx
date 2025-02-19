@@ -29,7 +29,7 @@ const initialAnalyse = {
         shortOrder: 0,
         shortProfit: 0,
         shortLoss: 0,
-        targetHit: {},
+        targetHit: [],
     },
     triggerStrategyBreakDown: {
         totalPnL: 0,
@@ -41,7 +41,7 @@ const initialAnalyse = {
         shortOrder: 0,
         shortProfit: 0,
         shortLoss: 0,
-        targetHit: {},
+        targetHit: [],
     },
 };
 
@@ -60,7 +60,7 @@ const initialState: {
     data: {},
     analyse: initialAnalyse,
     history: [],
-    duration: 2.5,
+    duration: 0.5,
 };
 
 const chartSlice = createSlice({
@@ -68,8 +68,9 @@ const chartSlice = createSlice({
     initialState: initialState,
     reducers: {
         updateData(state, payload) {
-            Object.assign(state.data, payload.payload.data);
-            Object.assign(state.analyse, processDataForAnalyse(payload.payload.analyse));
+            const { data, analyse } = payload.payload;
+            Object.assign(state.data, data);
+            Object.assign(state.analyse, analyse);
         },
         resetState(state, payload) {
             state.data = {};

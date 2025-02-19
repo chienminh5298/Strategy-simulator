@@ -63,6 +63,8 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
             const markPrice = getMarkPRice(stoploss[order.stoplossIdx + 1].target, order.side, order.entryPrice);
 
             if ((order.side === "long" && candle.High >= markPrice) || (order.side === "short" && candle.Low <= markPrice)) {
+                // Move stoploss by update stoplossIdx
+                openOrder[order.id] = { ...openOrder[order.id], stoplossIdx: openOrder[order.id].stoplossIdx + 1 };
                 // Check is last target
                 if (order.stoplossIdx + 1 === stoploss.length - 1) {
                     //// Close order
@@ -80,9 +82,6 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
                         closeOrder(order, markPrice, candle);
                     }
                 } else {
-                    // Move stoploss by update stoplossIdx
-                    openOrder[order.id] = { ...openOrder[order.id], stoplossIdx: openOrder[order.id].stoplossIdx + 1 };
-                    console.log(openOrder[order.id]);
                 }
             }
         }
@@ -213,7 +212,7 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
                 processCreateNewMidNightOrder(data, config, candle, i);
             }
         }
-    }   
+    }
 
     return response;
 };

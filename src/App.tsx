@@ -18,6 +18,7 @@ import Config from "@src/component/config";
 import { fetchToken } from "@src/http";
 import Tab from "@src/component/tab";
 import Chart from "@src/chart";
+import { processDataForAnalyse } from "./utils";
 
 const App = () => {
     const { isConfigCorrect, config, isBacktestRunning } = useSelector((state: RootState) => state.config);
@@ -64,7 +65,8 @@ const App = () => {
                 .map((order) => order.executedOrder!);
             dispatch(chartActions.resetState());
             dispatch(configActions.updateIsBacktestRunning(true));
-            dispatch(chartActions.updateData({ data: chartData, analyse: executedOrders }));
+            const analyseData = processDataForAnalyse(executedOrders, config);
+            dispatch(chartActions.updateData({ data: chartData, analyse: analyseData }));
         }
     };
 
