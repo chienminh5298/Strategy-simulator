@@ -1,39 +1,29 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { ColorType, createChart } from "lightweight-charts";
-import { useEffect, useRef } from "react";
 import styles from "@src/App.module.scss";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../redux/store";
-import { useDispatch } from "react-redux";
 import { configActions } from "../redux/configReducer";
 import { chartActions } from "../redux/chartReducer";
 
 const Chart = () => {
     const dispatch = useDispatch();
-
     const { data, duration } = useSelector((state: RootState) => state.chart);
-
     const chartContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (!chartContainerRef.current) {
-            return;
-        }
+        if (!chartContainerRef.current) return;
 
         const chart = createChart(chartContainerRef.current, {
-            width: chartContainerRef.current?.clientWidth, // Default width
-            height: chartContainerRef.current?.clientHeight, // Default height
+            width: chartContainerRef.current.clientWidth,
+            height: chartContainerRef.current.clientHeight,
             layout: {
                 textColor: "rgba(255, 255, 255, 1)",
                 background: { type: ColorType.Solid, color: "#11100f" },
             },
             grid: {
-                vertLines: {
-                    color: "#334158",
-                },
-                horzLines: {
-                    color: "#334158",
-                },
+                vertLines: { color: "#334158" },
+                horzLines: { color: "#334158" },
             },
             timeScale: {
                 barSpacing: 10,
@@ -43,10 +33,10 @@ const Chart = () => {
                 secondsVisible: false,
             },
             handleScale: {
-                axisPressedMouseMove: { time: true, price: false }, // Disable vertical scaling
+                axisPressedMouseMove: { time: true, price: false },
             },
             localization: {
-                dateFormat: "yyyy-MM-dd", // English date format
+                dateFormat: "yyyy-MM-dd",
                 locale: "en-US",
             },
         });
@@ -60,14 +50,16 @@ const Chart = () => {
             wickUpColor: "#838ca1",
         });
 
-        // update lable time
+        // Optional line series for additional data (e.g., labels)
         const lineSeries = chart.addLineSeries();
+
         let intervalID: any;
         if (Object.keys(data).length !== 0) {
+            // Transform the data object into an array of candles
             const ddd = Object.keys(data).map((key) => {
                 const temp = data[key];
                 return {
-                    time: Math.floor(new Date(key).getTime() / 1000), // Convert to Unix timestamp in seconds
+                    time: Math.floor(new Date(key).getTime() / 1000),
                     open: temp.candle.Open,
                     high: temp.candle.High,
                     low: temp.candle.Low,
@@ -77,15 +69,13 @@ const Chart = () => {
                 };
             });
 
-            const line_data: any[] = Object.keys(data).map((key) => {
-                return {
-                    time: Math.floor(new Date(key).getTime() / 1000),
-                };
-            });
-
+            // Set up a static line series data if needed
+            const line_data = Object.keys(data).map((key) => ({
+                time: Math.floor(new Date(key).getTime() / 1000),
+            }));
             lineSeries.setData(line_data);
 
-            // simulate real-time data
+            // Generator to simulate real-time data updates
             function* getNextRealtimeUpdate(realtimeData: any) {
                 for (const dataPoint of realtimeData) {
                     yield dataPoint;
@@ -93,7 +83,9 @@ const Chart = () => {
                 return null;
             }
             const streamingDataProvider = getNextRealtimeUpdate(ddd);
-            const nnnn: any[] = [];
+
+            // Maintain a bounded list of markers
+            const markers: any[] = [];
 
             intervalID = setInterval(() => {
                 const update = streamingDataProvider.next();
@@ -114,23 +106,13 @@ const Chart = () => {
                 if (dateData.openOrderSide) {
                     text = dateData.openOrderSide.toUpperCase();
                 }
-
                 if (text === "SHORT") {
                     shape = "arrowDown";
-                }
-                if (text === "LONG") {
+                } else if (text === "LONG") {
                     shape = "arrowUp";
                 }
 
-                nnnn.push({
-                    time: dateData.time,
-                    position: text === "SHORT" ? "aboveBar" : "belowBar",
-                    color: text === "SHORT" ? "#ef476f" : "#06d6a0",
-                    shape,
-                    text,
-                    size: 2,
-                });
-
+                // Update the candlestick with the new data
                 candleSeries.update({
                     time: dateData.time,
                     open: dateData.open,
@@ -139,10 +121,22 @@ const Chart = () => {
                     close: dateData.close,
                     ...(text !== "" ? { borderColor, borderWidth: 20 } : {}),
                 });
-                candleSeries.setMarkers(nnnn);
-                // candleSeries.update(dateData);
 
-                chart.timeScale().scrollToPosition(nnnn.length, false);
+                // Only add and update markers when an order is present
+                if (text === "SHORT" || text === "LONG") {
+                    markers.push({
+                        time: dateData.time,
+                        position: text === "SHORT" ? "aboveBar" : "belowBar",
+                        color: text === "SHORT" ? "#ef476f" : "#06d6a0",
+                        shape,
+                        text,
+                        size: 2,
+                    });
+                    candleSeries.setMarkers(markers);
+                }
+
+                // Instead of calculating based on marker count, use real-time scrolling
+                chart.timeScale().scrollToPosition(markers.length, false)
             }, duration);
         }
         return () => {

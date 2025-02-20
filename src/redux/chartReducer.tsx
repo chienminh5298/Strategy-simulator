@@ -1,4 +1,4 @@
-import { OverViewType, processDataForAnalyse, ProfitByMonthlyChartType, StrategyBreakDownType, ValueOverTimeChartType } from "@src/utils";
+import { OverViewType, ProfitByMonthlyChartType, StrategyBreakDownType, ValueOverTimeChartType } from "@src/utils";
 import { ChartCandleType, OrderType } from "@src/utils/backtestLogic";
 import { createSlice } from "@reduxjs/toolkit";
 
@@ -18,6 +18,7 @@ const initialAnalyse = {
         shortOrder: 0,
         shortProfit: 0,
         shortLoss: 0,
+        profitPercent: 0,
     },
     strategyBreakDown: {
         totalPnL: 0,
@@ -60,7 +61,7 @@ const initialState: {
     data: {},
     analyse: initialAnalyse,
     history: [],
-    duration: 0.5,
+    duration: 0.01,
 };
 
 const chartSlice = createSlice({
@@ -69,8 +70,7 @@ const chartSlice = createSlice({
     reducers: {
         updateData(state, payload) {
             const { data, analyse } = payload.payload;
-            Object.assign(state.data, data);
-            Object.assign(state.analyse, analyse);
+            Object.assign(state, {...state,data,analyse});
         },
         resetState(state, payload) {
             state.data = {};

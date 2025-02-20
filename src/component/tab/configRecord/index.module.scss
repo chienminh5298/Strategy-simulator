@@ -1,0 +1,63 @@
+.container {
+    display: flex;
+    padding: 10px;
+    border: black solid 1px;
+    .buy {
+        color: #35a074;
+    }
+    .sell {
+        color: #ff4976;
+    }
+    .borderBest {
+        border: rgba(255, 0, 0, 0.444) dashed 2px;
+    }
+    .config {
+        flex-basis: 25%;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: rgb(212, 212, 212);
+        box-sizing: border-box;
+        margin: 5px;
+        .infoPart {
+            .direction {
+                display: flex;
+                justify-content: space-between;
+                padding: 15px;
+            }
+            h2 {
+                padding: 5px;
+                margin: 2px;
+                background-color: gray;
+                color: white;
+            }
+            h3 {
+                padding: 5px;
+                margin: 2px;
+                background-color: rgb(200, 200, 200);
+                color: white;
+            }
+            .content {
+                padding: 15px;
+                display: flex;
+                flex-direction: column;
+
+                .row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 2px;
+                    &:not(:last-child) {
+                        border-bottom: dashed rgba(0, 0, 0, 0.177) 1px;
+                        margin-bottom: 5px;
+                    }
+                }
+                .strategy {
+                    background-color: #f4f4f4;
+                    padding: 5px;
+                    margin: 2px;
+                    border-radius: 5px;
+                }
+            }
+        }
+    }
+}

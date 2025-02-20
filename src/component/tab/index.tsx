@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
-import styles from "@src/App.module.scss";
+import PleaseRunBacktest from "@src/component/tab/pleaseRunBacktest";
 import HistoryTab from "@src/component/tab/history/history";
 import AnalyseTab from "@src/component/tab/analyse/analyse";
-import { useSelector } from "react-redux";
+import ConfigsRecord from "@src/component/tab/configRecord";
+import React, { useEffect, useState } from "react";
 import { RootState } from "@src/redux/store";
-import PleaseRunBacktest from "@src/component/tab/pleaseRunBacktest";
+import { useSelector } from "react-redux";
+import styles from "@src/App.module.scss";
 
 const Tab = () => {
     const [tab, setTab] = useState(<HistoryTab />);
@@ -15,16 +16,19 @@ const Tab = () => {
     const handleTab = (tabName: string) => {
         switch (tabName) {
             case "analyse":
+            case "record":
                 if (Object.keys(dataChart).length === 0 || isBacktestRunning) {
                     setTab(<PleaseRunBacktest />);
-                } else {
+                } else if (tabName === "analyse") {
                     setTab(<AnalyseTab />);
+                } else {
+                    setTab(<ConfigsRecord />);
                 }
                 setDefaultChecked(tabName);
                 break;
             default:
                 setTab(<HistoryTab />);
-                setDefaultChecked("history")
+                setDefaultChecked("history");
         }
     };
 
@@ -44,6 +48,10 @@ const Tab = () => {
                 <label className={styles.option} onClick={() => handleTab("analyse")}>
                     <input type="radio" name="tab" value="analyse" checked={defaultChecked === "analyse"} readOnly />
                     <span>Analyse</span>
+                </label>
+                <label className={styles.option} onClick={() => handleTab("record")}>
+                    <input type="radio" name="tab" value="record" checked={defaultChecked === "record"} readOnly />
+                    <span>Configs record</span>
                 </label>
             </header>
             <div>{tab}</div>

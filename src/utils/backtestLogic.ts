@@ -214,5 +214,67 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
         }
     }
 
+    response = convertTo15mChart(response);
+
+    return response;
+};
+
+const convertTo15mChart = (chart5m: ChartCandleType): ChartCandleType => {
+    let response: ChartCandleType = {};
+
+    // Convert the object values to an array and sort them by date ascending.
+    const data5m = Object.values(chart5m).sort((a, b) => new Date(a.candle.Date).getTime() - new Date(b.candle.Date).getTime());
+
+    // Group the 5-minute candles by 15-minute buckets.
+    // For example, candles at 00:00, 00:05, and 00:10 fall into the same bucket.
+    const groups: { [bucketKey: string]: typeof data5m } = {};
+    for (const item of data5m) {
+        const dateObj = new Date(item.candle.Date);
+        // Calculate the bucket's starting minute (0, 15, 30, or 45)
+        const bucketStartMinutes = Math.floor(dateObj.getUTCMinutes() / 15) * 15;
+        // Create a new Date representing the bucket's start time
+        const bucketDate = new Date(dateObj);
+        bucketDate.setUTCMinutes(bucketStartMinutes, 0, 0);
+        const bucketKey = bucketDate.toISOString();
+
+        if (!groups[bucketKey]) {
+            groups[bucketKey] = [];
+        }
+        groups[bucketKey].push(item);
+    }
+
+    // For each group, aggregate the candles if there are exactly 3 candles.
+    // (You can adjust the logic if you want to handle incomplete groups.)
+    for (const bucketKey in groups) {
+        const group = groups[bucketKey];
+        if (group.length === 3) {
+            const open = group[0].candle.Open;
+            const close = group[2].candle.Close;
+            const high = Math.max(group[0].candle.High, group[1].candle.High, group[2].candle.High);
+            const low = Math.min(group[0].candle.Low, group[1].candle.Low, group[2].candle.Low);
+            const volume = group[0].candle.Volume + group[1].candle.Volume + group[2].candle.Volume;
+
+            // Use the bucket's starting time as the aggregated candle's Date.
+            const aggregatedCandle = {
+                Date: bucketKey,
+                Open: open,
+                High: high,
+                Low: low,
+                Close: close,
+                Volume: volume,
+            };
+
+            // If any candle in the group has executedOrder or openOrderSide, pick the first available.
+            const executedOrder = group[0].executedOrder || group[1].executedOrder || group[2].executedOrder;
+            const openOrderSide = group[0].openOrderSide || group[1].openOrderSide || group[2].openOrderSide;
+
+            response[bucketKey] = {
+                candle: aggregatedCandle,
+                executedOrder,
+                openOrderSide,
+            };
+        }
+    }
+
     return response;
 };
