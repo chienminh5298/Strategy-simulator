@@ -1,3 +1,34 @@
+@use "@src/breakpoint.scss" as *;
+
+.blockSmallDevice {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    display: none;
+    .blockMess {
+        padding: 30px;
+        background-color: white;
+        border-radius: 5px;
+        width: 30%;
+        text-align: center;
+        display: flex;
+        gap: 10px;
+        flex-direction: column;
+        .icon {
+            color: red;
+            font-size: 24px;
+        }
+    }
+    @include respond("mobile") {
+        display: flex;
+    }
+}
+
 .wrapper {
     display: flex;
     flex-direction: column;
@@ -9,7 +40,7 @@
         right: 0;
         width: 100%;
         height: 100%;
-        z-index: 2;
+        z-index: 4;
         background-color: rgba(0, 0, 0, 0.612);
         display: flex;
         justify-content: center;
@@ -73,6 +104,7 @@
         background-color: gray;
         color: white;
     }
+
     .configAndChart {
         display: flex;
         align-items: stretch;
@@ -86,6 +118,7 @@
             flex-direction: column;
             border: black solid 1px;
             position: relative;
+
             .content {
                 padding: 10px;
                 .token .row {
@@ -374,6 +407,9 @@
             flex: 3.5;
             display: flex;
             flex-direction: column;
+            @include respond("tablet") {
+                flex: 2.5;
+            }
             .frameHeader {
                 border: black solid 1px;
                 padding: 5px 10px;
@@ -387,17 +423,24 @@
                 .buttonContainer {
                     position: absolute;
                     top: 2%;
-                    right: 2%;
-                    z-index: 3;
-                    .runButton {
-                        background-color: rgb(235, 235, 235);
-                        padding: 5px 20px;
-                        border-radius: 3px;
-                        box-shadow: 0px 0px 9px 0px white;
-                        cursor: pointer;
-                        border: black solid 1px;
-                        &:active {
-                            transform: translate(1px, 1px);
+                    right: 12%;
+                    .buttonWrapper {
+                        position: relative;
+                        .runButton {
+                            background-color: rgb(235, 235, 235);
+                            padding: 5px 20px;
+                            border-radius: 3px;
+                            z-index: 3;
+                            top: 0%;
+                            left: 0%;
+                            width: 100px;
+                            position: absolute;
+                            box-shadow: 0px 0px 9px 0px white;
+                            cursor: pointer;
+                            border: black solid 1px;
+                            &:active {
+                                transform: translate(1px, 1px);
+                            }
                         }
                     }
                 }

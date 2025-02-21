@@ -1,0 +1,20 @@
+// src/styles/breakpoint.scss
+$mobile-breakpoint: 1180px;
+$tablet-breakpoint: 1500px;
+$desktop-breakpoint: 1925px;
+
+@mixin respond($device) {
+    @if $device == "tablet" {
+        @media only screen and (max-width: $tablet-breakpoint) {
+            @content;
+        }
+    } @else if $device == "desktop" {
+        @media only screen and (max-width: $desktop-breakpoint) {
+            @content;
+        }
+    } @else if $device == "mobile" {
+        @media only screen and (max-width: $mobile-breakpoint) {
+            @content;
+        }
+    }
+}
