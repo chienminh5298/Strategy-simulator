@@ -184,12 +184,23 @@ export const processDataForAnalyse = (orders: Required<OrderType>[], config: con
     const longOrders = orders.filter((order) => order.side === "long");
     const shortOrders = orders.filter((order) => order.side === "short");
 
-    const totalPnL = orders.reduce((total, order) => total + order.profit, 0);
+    let highestLoss = 0;
+    let highestProfit = 0;
+    const totalPnL = orders.reduce((total, order) => {
+        const current = total + order.profit;
+        if (current < highestLoss) {
+            highestLoss = current;
+        }
+        if (current > highestProfit) {
+            highestProfit = current;
+        }
+        return current;
+    }, 0);
 
     let overView: OverViewType = {
         totalPnL: totalPnL,
-        highestLoss: lossOrders.reduce((total, order) => total + order.profit, 0),
-        highestProfit: proftOrders.reduce((total, order) => total + order.profit, 0),
+        highestLoss,
+        highestProfit,
         winRate: (proftOrders.length * 100) / orders.length,
         lossRate: (lossOrders.length * 100) / orders.length,
         totalTrade: orders.length,
