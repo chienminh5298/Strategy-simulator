@@ -3,7 +3,9 @@ import helpStyles from "@src/component/needHelp/index.module.scss";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { candleType, dataActions } from "@src/redux/dataReducer";
 import { Bounce, toast, ToastContainer } from "react-toastify";
-import { needHelpActions } from "@src/redux/needHelpReducer";
+import RecommendConfig from "@src/component/config/recommend";
+import CustomizeConfig from "@src/component/config/customize";
+import { systemActions } from "@src/redux/systemReducer";
 import { backtestLogic } from "@src/utils/backtestLogic";
 import { chartActions } from "@src/redux/chartReducer";
 import { configActions } from "@src/redux/configReducer";
@@ -15,25 +17,25 @@ import NeedHelp from "@src/component/needHelp";
 import "react-toastify/dist/ReactToastify.css";
 import { RootState } from "@src/redux/store";
 import styles from "@src/App.module.scss";
-import Config from "@src/component/config";
 import { fetchToken } from "@src/http";
 import Tab from "@src/component/tab";
 import Chart from "@src/chart";
 
 const App = () => {
-    const { isConfigCorrect, config, isBacktestRunning } = useSelector((state: RootState) => state.config);
-    const dataStore = useSelector((state: RootState) => state.data);
+    const dispatch = useDispatch();
+
     const [rawData, setRawData] = useState<{ [data: string]: candleType }>({});
-    const { isShowNeedHelp, step } = useSelector((state: RootState) => state.needHelp);
+
+    const dataStore = useSelector((state: RootState) => state.data);
+    const { isShowNeedHelp, step } = useSelector((state: RootState) => state.system);
+    const { isConfigCorrect, config, isBacktestRunning } = useSelector((state: RootState) => state.config);
+    const isFetchingData = useSelector((state: RootState) => state.system.isLoading);
 
     useEffect(() => {
         if (isConfigCorrect) {
             setRawData(dataStore[config.token][parseInt(config.year)]);
         }
     }, [isConfigCorrect, dataStore, config]);
-
-    const [isFetchData, setIsFetchData] = useState(false);
-    const dispatch = useDispatch();
 
     const { data, isLoading, isError } = useQuery({
         queryKey: ["token"], // Unique key for caching
@@ -44,12 +46,13 @@ const App = () => {
         if (isError) {
             toast.error("Can't fetch data.");
         }
-        setIsFetchData(!isFetchData);
-        if (isFetchData) {
-            dispatch(needHelpActions.showNeedHelp());
+        dispatch(systemActions.updateLoading(!isFetchingData));
+        if (isFetchingData) {
+            // dispatch(systemActions.showNeedHelp());
         }
     }, [isError, isLoading]);
 
+    console.log(isFetchingData)
     useEffect(() => {
         if (data && data.status === 200) {
             dispatch(dataActions.fetchToken(data.data));
@@ -71,6 +74,22 @@ const App = () => {
         }
     };
 
+    // Handle config tab
+    const [configTab, setConfigTab] = useState(<CustomizeConfig />);
+    // const [configTab, setConfigTab] = useState(<RecommendConfig />);
+    const [defaultChecked, setDefaultChecked] = useState("customize");
+
+    const handleConfigTab = (tabName: string) => {
+        switch (tabName) {
+            case "recommend":
+                setDefaultChecked(tabName);
+                setConfigTab(<RecommendConfig />);
+                break;
+            default:
+                setConfigTab(<CustomizeConfig />);
+                setDefaultChecked("customize");
+        }
+    };
     return (
         <Fragment>
             <div className={styles.blockSmallDevice}>
@@ -106,7 +125,7 @@ const App = () => {
                             </div>
                         )}
                         <div className={styles.helpContainer}>
-                            <div className={styles.nextButton} onClick={() => dispatch(needHelpActions.updateStep())}>
+                            <div className={styles.nextButton} onClick={() => dispatch(systemActions.updateStep())}>
                                 <span>Next</span>
                                 <FontAwesomeIcon icon={faArrowRight} />
                             </div>
@@ -114,7 +133,7 @@ const App = () => {
                     </Fragment>
                 )}
 
-                {isFetchData && (
+                {isFetchingData && (
                     <div className={styles.loading}>
                         <div className={styles.content}>
                             <FontAwesomeIcon icon={faRotate} className={styles.loadingIcon} />
@@ -124,7 +143,21 @@ const App = () => {
                 )}
                 <ToastContainer position="top-center" autoClose={false} newestOnTop={false} closeOnClick={false} rtl={false} pauseOnFocusLoss draggable={false} theme="light" transition={Bounce} />
                 <div className={styles.configAndChart}>
-                    <Config setIsFetchData={setIsFetchData} />
+                    <div className={styles.configContainer}>
+                        <div className={styles.configTab}>
+                            <header className={styles.frameHeader}>
+                                <label className={styles.option} onClick={() => handleConfigTab("customize")}>
+                                    <input type="radio" name="configTab" value="customize" checked={defaultChecked === "customize"} readOnly />
+                                    <span>Customize config</span>
+                                </label>
+                                <label className={styles.option} onClick={() => handleConfigTab("recommend")}>
+                                    <input type="radio" name="configTab" value="recommend" checked={defaultChecked === "recommend"} readOnly />
+                                    <span>Recommend config</span>
+                                </label>
+                            </header>
+                        </div>
+                        {configTab}
+                    </div>
                     <div className={styles.chart}>
                         <header className={styles.frameHeader}>Live chart</header>
                         <div className={styles.container}>

@@ -1,22 +1,24 @@
-import React, { Dispatch, Fragment, SetStateAction, useEffect, useState } from "react";
-import { faBook, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
-import { fetchTokenDataByYear, mutationUpdateData } from "@src/http";
-import helpStyles from "@src/component/needHelp/index.module.scss";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { errorMessage } from "@src/component/config/errorMessage";
-import { faTrashCan } from "@fortawesome/free-regular-svg-icons";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { needHelpActions } from "@src/redux/needHelpReducer";
-import { configActions } from "@src/redux/configReducer";
-import CurrencyInput from "react-currency-input-field";
-import { useDispatch, useSelector } from "react-redux";
-import { chartActions } from "@src/redux/chartReducer";
-import { dataActions } from "@src/redux/dataReducer";
-import { convertToUTCDateTime } from "@src/utils";
-import NeedHelp from "@src/component/needHelp";
-import { RootState } from "@src/redux/store";
-import styles from "@src/App.module.scss";
 import { toast } from "react-toastify";
+import { useMutation } from "@tanstack/react-query";
+import { useDispatch, useSelector } from "react-redux";
+import React, { Fragment, useEffect, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrashCan } from "@fortawesome/free-regular-svg-icons";
+import { faBook, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
+
+import { RootState } from "@src/redux/store";
+import { mutationUpdateData } from "@src/http";
+import NeedHelp from "@src/component/needHelp";
+import { convertToUTCDateTime } from "@src/utils";
+import { dataActions } from "@src/redux/dataReducer";
+import CurrencyInput from "react-currency-input-field";
+import { chartActions } from "@src/redux/chartReducer";
+import { configActions } from "@src/redux/configReducer";
+import { systemActions } from "@src/redux/systemReducer";
+import styles from "@src/component/config/customize.module.scss";
+import { errorMessage } from "@src/component/config/errorMessage";
+import helpStyles from "@src/component/needHelp/index.module.scss";
+import useFetchYearData from "@src/customHook/fetchTokenDataByYear";
 
 export type StoplossType = {
     target: number;
@@ -41,20 +43,18 @@ export type configType = {
     };
 };
 
-type ConfigProps = {
-    setIsFetchData: Dispatch<SetStateAction<boolean>>;
-};
-
-const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
-    const { isShowNeedHelp, step } = useSelector((state: RootState) => state.needHelp);
+const CustomizeConfig = () => {
     const dispatch = useDispatch();
-    const [dataUpToDate, setDataUpToDate] = useState(false);
-    const [configError, setConfigError] = useState<undefined | "token" | "year" | "value" | "strategy" | "triggerStrategy">(undefined);
+
     const tokenData = useSelector((state: RootState) => state.data);
     const storeConfig = useSelector((state: RootState) => state.config.config);
-    const [config, setConfig] = useState<configType>(storeConfig);
+    const { isShowNeedHelp, step } = useSelector((state: RootState) => state.system);
 
-    let renderTokens = Object.keys(tokenData).map((token, idx) => (
+    const [dataUpToDate, setDataUpToDate] = useState(false);
+    const [config, setConfig] = useState<configType>(storeConfig);
+    const [configError, setConfigError] = useState<undefined | "token" | "year" | "value" | "strategy" | "triggerStrategy">(undefined);
+
+    const renderTokens = Object.keys(tokenData).map((token, idx) => (
         <option key={idx} value={token}>
             {token}
         </option>
@@ -132,17 +132,17 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
         mutationFn: () => mutationUpdateData(config.token, getLastDate(tokenData[config.token])),
         onMutate: () => {
             // When the mutation starts, set fetching to true
-            setIsFetchData(true);
+            dispatch(systemActions.updateLoading(true));
         },
         onError: () => {
             // If an error occurs, stop fetching
-            setIsFetchData(false);
+            dispatch(systemActions.updateLoading(false));
             toast.error("Can not fetching new data.");
         },
         onSuccess: (res) => {
             // Ensure fetch state resets properly
             refetch();
-            setIsFetchData(false);
+            dispatch(systemActions.updateLoading(false));
             toast.success("Data fetched successfully.");
             setDataUpToDate(true);
         },
@@ -242,19 +242,11 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
     };
 
     // Query year data
-    const {
-        data: yearData,
-        isLoading,
-        refetch,
-    } = useQuery({
-        queryKey: ["data", config.token, config.year],
-        queryFn: () => fetchTokenDataByYear(config.token, config.year),
-        enabled: false,
-    });
+    const { data: yearData, isLoading, refetch } = useFetchYearData({ token: config.token, year: config.year });
 
     useEffect(() => {
-        setIsFetchData(isLoading);
-    }, [isLoading, setIsFetchData]);
+        dispatch(systemActions.updateLoading(isLoading));
+    }, [isLoading, dispatch]);
 
     useEffect(() => {
         if (yearData) {
@@ -271,7 +263,7 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
         }
     }, [config.token, config.year]);
 
-    let renderDataUpToDate = config.token === "" ? <Fragment></Fragment> : getLastDate(tokenData[config.token]);
+    const renderDataUpToDate = config.token === "" ? <Fragment></Fragment> : getLastDate(tokenData[config.token]);
 
     return (
         <form className={styles.config} onSubmit={handleSubmit}>
@@ -329,7 +321,6 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
                     </div>
                 </NeedHelp>
             )}
-            <header className={styles.frameHeader}>Config</header>
             <div className={styles.content}>
                 <div className={`${styles.token} ${configError === "token" && styles.errorForm}`}>
                     <div className={styles.row}>
@@ -499,7 +490,7 @@ const Config: React.FC<ConfigProps> = ({ setIsFetchData }) => {
     );
 };
 
-export default Config;
+export default CustomizeConfig;
 
 const checkConfig = (config: configType) => {
     if (config.token === "") return "token";
@@ -541,12 +532,12 @@ const checkStrategyFn = (
     if (lastStoploss.percent !== lastStoploss.target) return "strategy";
 };
 
-const checkDate = (date: Date) => {
+export const checkDate = (date: Date) => {
     const today = new Date();
     return date.getDate() + 1 === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
 };
 
-const getLastDate = (data: { [token: string]: any[] }) => {
+export const getLastDate = (data: { [token: string]: any[] }) => {
     const thisYear = Object.keys(data).pop();
     if (thisYear) {
         const dataThisYear = Object.values(data[thisYear]);

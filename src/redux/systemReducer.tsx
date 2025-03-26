@@ -1,17 +1,19 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-type NeedHelpType = {
+type SystemType = {
     isShowNeedHelp: boolean;
+    isLoading: boolean;
     step: number;
 };
-const initialState: NeedHelpType = {
+const initialState: SystemType = {
     isShowNeedHelp: false,
+    isLoading: false,
     step: 0,
 };
 
 const total_step = 3;
 
-const needHelpSlice = createSlice({
+const systemSlice = createSlice({
     name: "needHelp",
     initialState: initialState,
     reducers: {
@@ -24,8 +26,11 @@ const needHelpSlice = createSlice({
         showNeedHelp(state, payload) {
             state.isShowNeedHelp = true;
         },
+        updateLoading(state, payload) {
+            state.isLoading = payload.payload;
+        }
     },
 });
 
-export const needHelpActions = needHelpSlice.actions;
-export default needHelpSlice.reducer;
+export const systemActions = systemSlice.actions;
+export default systemSlice.reducer;

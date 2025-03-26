@@ -50,12 +50,16 @@ const Chart = () => {
             wickUpColor: "#838ca1",
         });
 
-        // Optional line series for additional data (e.g., labels)
+        // Volume series at the bottom with transparent colors
+        const volumeSeries = chart.addHistogramSeries({
+            priceScaleId: "volume", // Separate price scale for volume
+            priceFormat: { type: "volume" },
+        });
+
         const lineSeries = chart.addLineSeries();
 
         let intervalID: any;
         if (Object.keys(data).length !== 0) {
-            // Transform the data object into an array of candles
             const ddd = Object.keys(data).map((key) => {
                 const temp = data[key];
                 return {
@@ -64,18 +68,15 @@ const Chart = () => {
                     high: temp.candle.High,
                     low: temp.candle.Low,
                     close: temp.candle.Close,
+                    volume: temp.candle.Volume,
                     openOrderSide: temp.openOrderSide,
                     executedOrder: temp.executedOrder,
                 };
             });
 
-            // Set up a static line series data if needed
-            const line_data = Object.keys(data).map((key) => ({
-                time: Math.floor(new Date(key).getTime() / 1000),
-            }));
+            const line_data = ddd.map(({ time }) => ({ time }));
             lineSeries.setData(line_data);
 
-            // Generator to simulate real-time data updates
             function* getNextRealtimeUpdate(realtimeData: any) {
                 for (const dataPoint of realtimeData) {
                     yield dataPoint;
@@ -83,8 +84,6 @@ const Chart = () => {
                 return null;
             }
             const streamingDataProvider = getNextRealtimeUpdate(ddd);
-
-            // Maintain a bounded list of markers
             const markers: any[] = [];
 
             intervalID = setInterval(() => {
@@ -112,7 +111,6 @@ const Chart = () => {
                     shape = "arrowUp";
                 }
 
-                // Update the candlestick with the new data
                 candleSeries.update({
                     time: dateData.time,
                     open: dateData.open,
@@ -122,7 +120,13 @@ const Chart = () => {
                     ...(text !== "" ? { borderColor, borderWidth: 20 } : {}),
                 });
 
-                // Only add and update markers when an order is present
+                // Volume series update with transparency
+                volumeSeries.update({
+                    time: dateData.time,
+                    value: dateData.volume,
+                    color: dateData.close > dateData.open ? "rgba(38, 166, 154, 0.2)" : "rgba(239, 71, 111, 0.2)", // Transparent green & red
+                });
+
                 if (text === "SHORT" || text === "LONG") {
                     markers.push({
                         time: dateData.time,
@@ -135,10 +139,10 @@ const Chart = () => {
                     candleSeries.setMarkers(markers);
                 }
 
-                // Instead of calculating based on marker count, use real-time scrolling
-                chart.timeScale().scrollToPosition(markers.length, false)
+                chart.timeScale().scrollToPosition(markers.length, false);
             }, duration);
         }
+
         return () => {
             chart.remove();
             clearInterval(intervalID);

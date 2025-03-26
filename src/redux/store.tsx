@@ -1,6 +1,6 @@
 import configReducer from "@src/redux/configReducer";
 import chartReducer from "@src/redux/chartReducer";
-import needHelp from "@src/redux/needHelpReducer";
+import systemReducer from "@src/redux/systemReducer";
 import { configureStore } from "@reduxjs/toolkit";
 import dataReducer from "@src/redux/dataReducer";
 
@@ -9,7 +9,7 @@ const store = configureStore({
         config: configReducer, // Add reducers here
         data: dataReducer, // Add reducers here
         chart: chartReducer,
-        needHelp: needHelp,
+        system: systemReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

@@ -1,5 +1,11 @@
-import { configType } from "@src/component/config";
+import { configType } from "@root/src/component/config/customize";
 import { createSlice } from "@reduxjs/toolkit";
+
+export interface RecommendConfigType extends configType {
+    numOfStrategyTarget: number;
+    numOfTriggerStrategyTarget: number;
+    maxLossPercent: number;
+}
 
 type ConfigRecordType = {
     profitPercent: number;
@@ -12,6 +18,7 @@ const initialState: {
     bestConfig?: ConfigRecordType;
     last3Config: ConfigRecordType[];
     config: configType;
+    recommendConfig: RecommendConfigType;
 } = {
     isConfigCorrect: false,
     isBacktestRunning: false,
@@ -50,6 +57,26 @@ const initialState: {
                 },
             ],
         },
+    },
+    recommendConfig: {
+        numOfStrategyTarget: 2,
+        numOfTriggerStrategyTarget: 2,
+        token: "",
+        year: "",
+        value: 500,
+        setting: {
+            keepOrderOverNight: false,
+            isTrigger: false,
+        },
+        strategy: {
+            direction: "opposite",
+            stoplosses: [],
+        },
+        triggerStrategy: {
+            direction: "opposite",
+            stoplosses: [],
+        },
+        maxLossPercent: -2,
     },
 };
 

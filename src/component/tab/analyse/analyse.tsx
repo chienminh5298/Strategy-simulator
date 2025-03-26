@@ -107,6 +107,14 @@ const AnalyseTab = () => {
                             <div className={`${styles.value} ${overView.totalPnL > 0 ? styles.buy : styles.sell}`}>{toUSD(overView.totalPnL)}</div>
                         </div>
                         <div className={styles.row}>
+                            <div className={styles.title}>Highest profit</div>
+                            <div className={`${styles.value} ${styles.buy}`}>{toUSD(overView.highestProfit)}</div>
+                        </div>
+                        <div className={styles.row}>
+                            <div className={styles.title}>Highest loss</div>
+                            <div className={`${styles.value} ${styles.sell}`}>{toUSD(overView.highestLoss)}</div>
+                        </div>
+                        <div className={styles.row}>
                             <div className={styles.title}>Win rate</div>
                             <div className={`${styles.value} ${styles.buy}`}>
                                 {overView.winRate.toFixed(2)}% ~ {toUSD(overView.longProfit + overView.shortProfit)}

@@ -1,4 +1,4 @@
-import { configType, StoplossType } from "@src/component/config";
+import { configType, StoplossType } from "@root/src/component/config/customize";
 import { candleType } from "@src/redux/dataReducer";
 
 export type OrderType = {
@@ -22,14 +22,15 @@ export type ChartCandleType = {
     };
 };
 
-const getOpenCandle = (candle: candleType) => {
+export const getOpenCandle = (candle: candleType) => {
     const temp = new Date(candle.Date);
     const year = temp.getFullYear();
     const month = String(temp.getMonth() + 1).padStart(2, "0"); // Two-digit month
     const day = String(temp.getDate()).padStart(2, "0"); // Two-digit day
     return `${year}-${month}-${day}T00:00:00.000Z`;
 };
-const getCloseCandle = (candle: candleType) => {
+
+export const getCloseCandle = (candle: candleType) => {
     const temp = new Date(candle.Date);
     const year = temp.getFullYear();
     const month = String(temp.getMonth() + 1).padStart(2, "0"); // Two-digit month
@@ -37,6 +38,51 @@ const getCloseCandle = (candle: candleType) => {
 
     return `${year}-${month}-${day}T23:55:00.000Z`;
 };
+
+type GetNewOrderSideType = {
+    config: configType;
+    isTriggerOrder: boolean;
+    openCandle: candleType;
+    closeCandle: candleType;
+};
+
+const getNewOrderSide = ({ config, isTriggerOrder, openCandle, closeCandle }: GetNewOrderSideType) => {
+    const prevDayCandleColor = getDayColor(openCandle, closeCandle);
+    if (!isTriggerOrder) {
+        if (config.strategy.direction === "same") return prevDayCandleColor === "green" ? "long" : "short";
+        else return prevDayCandleColor === "green" ? "short" : "long";
+    } else {
+        if ((config.strategy.direction === "same" && config.triggerStrategy.direction === "same") || (config.strategy.direction === "opposite" && config.triggerStrategy.direction === "opposite")) return prevDayCandleColor === "green" ? "long" : "short";
+        else return prevDayCandleColor === "green" ? "short" : "long";
+    }
+};
+
+export const getDayColor = (openCandle: candleType, closeCandle: candleType) => {
+    if (openCandle.Open > closeCandle.Close) return "red";
+    else return "green";
+};
+
+export const checkIsMidNight = (UTCstring: string) => {
+    const date = new Date(UTCstring);
+    return date.getUTCHours() === 0 && date.getUTCMinutes() === 0 && date.getUTCSeconds() === 0;
+};
+
+export const getMarkPRice = (percent: number, side: "long" | "short", entryPrice: number) => {
+    if (side === "long") {
+        return entryPrice + (percent * entryPrice) / 100;
+    } else {
+        return entryPrice - (percent * entryPrice) / 100;
+    }
+};
+
+export const getProfit = ({ qty, side, markPrice, entryPrice }: { qty: number; side: "long" | "short"; markPrice: number; entryPrice: number }) => {
+    if (side === "long") {
+        return (markPrice - entryPrice) * qty;
+    } else {
+        return (entryPrice - markPrice) * qty;
+    }
+};
+export const randomId = () => Math.floor(100000000 + Math.random() * 900000000);
 
 export const backtestLogic = (data: { [date: string]: candleType }, config: configType) => {
     const dataKey = Object.keys(data);
@@ -48,11 +94,6 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
         const prevDayCloseCandle = data[getCloseCandle(candle)];
         const side = getNewOrderSide({ config, isTriggerOrder: false, openCandle: prevDayOpenCandle, closeCandle: prevDayCloseCandle });
         createNewOrder({ candle, entryPrice: candle.Open, isTrigger: false, side, config });
-    };
-
-    const checkIsMidNight = (UTCstring: string) => {
-        const date = new Date(UTCstring);
-        return date.getUTCHours() === 0 && date.getUTCMinutes() === 0 && date.getUTCSeconds() === 0;
     };
 
     const checkHitTarget = (candle: candleType, config: configType) => {
@@ -104,37 +145,6 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
         }
     };
 
-    const getProfit = ({ qty, side, markPrice, entryPrice }: { qty: number; side: "long" | "short"; markPrice: number; entryPrice: number }) => {
-        if (side === "long") {
-            return (markPrice - entryPrice) * qty;
-        } else {
-            return (entryPrice - markPrice) * qty;
-        }
-    };
-
-    const getDayColor = (openCandle: candleType, closeCandle: candleType) => {
-        if (openCandle.Open > closeCandle.Close) return "red";
-        else return "green";
-    };
-
-    type GetNewOrderSideType = {
-        config: configType;
-        isTriggerOrder: boolean;
-        openCandle: candleType;
-        closeCandle: candleType;
-    };
-
-    const getNewOrderSide = ({ config, isTriggerOrder, openCandle, closeCandle }: GetNewOrderSideType) => {
-        const prevDayCandleColor = getDayColor(openCandle, closeCandle);
-        if (!isTriggerOrder) {
-            if (config.strategy.direction === "same") return prevDayCandleColor === "green" ? "long" : "short";
-            else return prevDayCandleColor === "green" ? "short" : "long";
-        } else {
-            if ((config.strategy.direction === "same" && config.triggerStrategy.direction === "same") || (config.strategy.direction === "opposite" && config.triggerStrategy.direction === "opposite")) return prevDayCandleColor === "green" ? "long" : "short";
-            else return prevDayCandleColor === "green" ? "short" : "long";
-        }
-    };
-
     type CreateNewOrderType = {
         candle: candleType;
         entryPrice: number;
@@ -168,16 +178,6 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
         }
     };
 
-    const getMarkPRice = (percent: number, side: "long" | "short", entryPrice: number) => {
-        if (side === "long") {
-            return entryPrice + (percent * entryPrice) / 100;
-        } else {
-            return entryPrice - (percent * entryPrice) / 100;
-        }
-    };
-
-    const randomId = () => Math.floor(100000000 + Math.random() * 900000000);
-
     //========================= Logic start from here ========================= //
     for (let i = 481; i < dataKey.length; i++) {
         const candle = dataValues[i];
@@ -210,6 +210,10 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
             } else {
                 // Create new order
                 processCreateNewMidNightOrder(data, config, candle, i);
+                
+                // Check hit stoploss for new oder just opned (In case hit stoploss at first candle of the day)
+                checkHitStoploss(candle, config);
+                checkHitTarget(candle, config);
             }
         }
     }

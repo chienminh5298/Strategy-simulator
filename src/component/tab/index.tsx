@@ -41,7 +41,7 @@ const Tab = () => {
     return (
         <div className={styles.board}>
             <header className={styles.frameHeader}>
-                <label className={styles.option} onClick={() => handleTab("historyf")}>
+                <label className={styles.option} onClick={() => handleTab("history")}>
                     <input type="radio" name="tab" value="history" checked={defaultChecked === "history"} readOnly />
                     <span>History</span>
                 </label>

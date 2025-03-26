@@ -1,5 +1,5 @@
 import { OrderType } from "@src/utils/backtestLogic";
-import { configType } from "@src/component/config";
+import { configType } from "@root/src/component/config/customize";
 
 export function convertToUTCDateTime(isoString: string) {
     // Create a Date object from the ISO string
@@ -35,6 +35,8 @@ export type OverViewType = {
     shortProfit: number;
     shortLoss: number;
     profitPercent: number;
+    highestLoss: number;
+    highestProfit: number;
 };
 
 export type ValueOverTimeChartType = {
@@ -183,8 +185,11 @@ export const processDataForAnalyse = (orders: Required<OrderType>[], config: con
     const shortOrders = orders.filter((order) => order.side === "short");
 
     const totalPnL = orders.reduce((total, order) => total + order.profit, 0);
+
     let overView: OverViewType = {
         totalPnL: totalPnL,
+        highestLoss: lossOrders.reduce((total, order) => total + order.profit, 0),
+        highestProfit: proftOrders.reduce((total, order) => total + order.profit, 0),
         winRate: (proftOrders.length * 100) / orders.length,
         lossRate: (lossOrders.length * 100) / orders.length,
         totalTrade: orders.length,
