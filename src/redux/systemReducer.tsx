@@ -1,30 +1,30 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 type SystemType = {
-    isShowNeedHelp: boolean;
+    isShowNeedHelpCustomConfig: boolean;
     isLoading: boolean;
-    step: number;
+    stepCustomConfig: number;
 };
 const initialState: SystemType = {
-    isShowNeedHelp: false,
+    isShowNeedHelpCustomConfig: false,
     isLoading: false,
-    step: 0,
+    stepCustomConfig: 0,
 };
 
-const total_step = 3;
+const total_step_custom_config = 3;
 
 const systemSlice = createSlice({
     name: "needHelp",
     initialState: initialState,
     reducers: {
-        updateStep(state, payload) {
-            state.step += 1;
-            if (state.step > total_step) {
-                Object.assign(state, { step: 0, isShowNeedHelp: false });
+        updateStepCustomConfig(state, payload) {
+            state.stepCustomConfig += 1;
+            if (state.stepCustomConfig > total_step_custom_config) {
+                Object.assign(state, { step: 0, isShowNeedHelpCustomConfig: false });
             }
         },
         showNeedHelp(state, payload) {
-            state.isShowNeedHelp = true;
+            state.isShowNeedHelpCustomConfig = true;
         },
         updateLoading(state, payload) {
             state.isLoading = payload.payload;

@@ -27,7 +27,7 @@ const App = () => {
     const [rawData, setRawData] = useState<{ [data: string]: candleType }>({});
 
     const dataStore = useSelector((state: RootState) => state.data);
-    const { isShowNeedHelp, step } = useSelector((state: RootState) => state.system);
+    const { isShowNeedHelpCustomConfig, stepCustomConfig } = useSelector((state: RootState) => state.system);
     const { isConfigCorrect, config, isBacktestRunning } = useSelector((state: RootState) => state.config);
     const isFetchingData = useSelector((state: RootState) => state.system.isLoading);
 
@@ -48,7 +48,7 @@ const App = () => {
         }
         dispatch(systemActions.updateLoading(!isFetchingData));
         if (isFetchingData) {
-            // dispatch(systemActions.showNeedHelp());
+            dispatch(systemActions.showNeedHelp());
         }
     }, [isError, isLoading]);
 
@@ -102,9 +102,9 @@ const App = () => {
             </div>
 
             <div className={styles.wrapper}>
-                {isShowNeedHelp && (
+                {isShowNeedHelpCustomConfig && (
                     <Fragment>
-                        {step === 0 && (
+                        {stepCustomConfig === 0 && (
                             <div className={`${helpStyles.helpContainer} ${helpStyles.welcomeBoard}`}>
                                 <div className={helpStyles.welcomeTitle}>
                                     <FontAwesomeIcon icon={faGamepad} className={helpStyles.icon} />
@@ -125,7 +125,7 @@ const App = () => {
                             </div>
                         )}
                         <div className={styles.helpContainer}>
-                            <div className={styles.nextButton} onClick={() => dispatch(systemActions.updateStep())}>
+                            <div className={styles.nextButton} onClick={() => dispatch(systemActions.updateStepCustomConfig())}>
                                 <span>Next</span>
                                 <FontAwesomeIcon icon={faArrowRight} />
                             </div>
@@ -162,7 +162,7 @@ const App = () => {
                         <header className={styles.frameHeader}>Live chart</header>
                         <div className={styles.container}>
                             <div className={styles.buttonContainer}>
-                                {isShowNeedHelp && step === 3 && (
+                                {isShowNeedHelpCustomConfig && stepCustomConfig === 3 && (
                                     <NeedHelp position="bottom-left">
                                         <div className={helpStyles.helpBox}>
                                             <div className={helpStyles.helpRunButton}>After apply config, press button to run!</div>

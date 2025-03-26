@@ -25,7 +25,6 @@ const RecommendConfig = () => {
     const tokenData = useSelector((state: RootState) => state.data);
 
     const [dataUpToDate, setDataUpToDate] = useState(false);
-    const [recommendResult, setRecommendResult] = useState<configType>();
     const [recommendConfig, setRecommendConfig] = useState<RecommendConfigType>(storeRecommendConfig);
     const [configError, setConfigError] = useState<undefined | "token" | "year" | "value" | "strategy" | "triggerStrategy">(undefined);
 
@@ -46,7 +45,7 @@ const RecommendConfig = () => {
 
     const renderDataUpToDate = recommendConfig?.token === "" ? <Fragment></Fragment> : getLastDate(tokenData[recommendConfig.token]);
 
-    let renderStrategyStoplosses = recommendResult?.strategy.stoplosses.map((sl, idx) => {
+    let renderStrategyStoplosses = recommendConfig?.strategy.stoplosses.map((sl, idx) => {
         return (
             <Fragment key={idx}>
                 <div className={`${styles.col} ${styles.delete}`}></div>
@@ -56,7 +55,7 @@ const RecommendConfig = () => {
         );
     });
 
-    let renderTriggerStrategyStoplosses = recommendResult?.triggerStrategy.stoplosses.map((sl, idx) => {
+    let renderTriggerStrategyStoplosses = recommendConfig?.triggerStrategy.stoplosses.map((sl, idx) => {
         return (
             <Fragment key={idx}>
                 <div className={`${styles.col} ${styles.delete}`}></div>
@@ -148,13 +147,22 @@ const RecommendConfig = () => {
         if (checkCf === undefined) {
             dispatch(systemActions.updateLoading(true));
             try {
-                const result = await new Promise((resolve) => {
+                const result = await new Promise<{
+                    setting: RecommendConfigType["setting"];
+                    strategy: RecommendConfigType["strategy"];
+                    triggerStrategy: RecommendConfigType["triggerStrategy"];
+                }>((resolve) => {
                     setTimeout(() => {
                         const res = recommendLogic(recommendConfig, tokenData[recommendConfig.token][recommendConfig.year]);
                         resolve(res);
                     }, 10); // small timeout to force re-render
                 });
-                setRecommendResult(result as any);
+                setRecommendConfig((prev) => ({
+                    ...prev,
+                    setting: result.setting,
+                    strategy: result.strategy,
+                    triggerStrategy: result.triggerStrategy,
+                }));
             } finally {
                 dispatch(systemActions.updateLoading(false));
             }
@@ -167,11 +175,13 @@ const RecommendConfig = () => {
     const handleApplyConfig = (e: any) => {
         e.preventDefault();
         dispatch(configActions.updateIsConfigCorrect(true));
-        dispatch(configActions.updateConfig(recommendResult)); // Use the newConfig here
+        dispatch(configActions.updateConfig(recommendConfig)); // Use the newConfig here
         dispatch(chartActions.resetState());
         dispatch(configActions.updateIsBacktestRunning(false));
         toast.success("Apply config successfully. You can run backtest now.");
     };
+
+    console.log(recommendConfig)
     return (
         <form className={styles.config}>
             <div className={styles.content}>
@@ -259,7 +269,7 @@ const RecommendConfig = () => {
                     </div>
                 </div>
 
-                {recommendResult && (
+                {recommendConfig.strategy.stoplosses.length > 0 && (
                     <div className={styles.recommendResult}>
                         <div className={styles.setting}>
                             <div className={`${styles.row} ${styles.keepOrderOverNight}`}>
@@ -267,7 +277,7 @@ const RecommendConfig = () => {
                                 <div className={styles.content}>
                                     <section title=".squaredOne">
                                         <div className={styles.squaredOne}>
-                                            <input type="checkbox" value="None" id="keepOrderOverNight" name="keepOrderOverNight" disabled defaultChecked={recommendResult?.setting.keepOrderOverNight} />
+                                            <input type="checkbox" value="None" id="keepOrderOverNight" name="keepOrderOverNight" disabled defaultChecked={recommendConfig?.setting.keepOrderOverNight} />
                                             <label htmlFor="keepOrderOverNight"></label>
                                         </div>
                                     </section>
@@ -282,12 +292,12 @@ const RecommendConfig = () => {
                                 <div className={styles.direction}>Direction compared to previous day candle:</div>
                                 <div className={styles.option}>
                                     <label className={`${styles.option} ${styles.short}`}>
-                                        <input type="radio" name="direction" value="same" readOnly checked={recommendResult?.strategy.direction === "same"} />
+                                        <input type="radio" name="direction" value="same" readOnly checked={recommendConfig?.strategy.direction === "same"} />
                                         <span>Same</span>
                                     </label>
 
                                     <label className={`${styles.option} ${styles.long}`}>
-                                        <input type="radio" name="direction" value="opposite" readOnly checked={recommendResult?.strategy.direction === "opposite"} />
+                                        <input type="radio" name="direction" value="opposite" readOnly checked={recommendConfig?.strategy.direction === "opposite"} />
                                         <span>Opposite</span>
                                     </label>
                                 </div>
@@ -304,7 +314,7 @@ const RecommendConfig = () => {
                                 </div>
                             </div>
                         </div>
-                        {recommendResult?.setting.isTrigger && (
+                        {recommendConfig?.setting.isTrigger && (
                             <div className={`${styles.strategy} ${configError === "triggerStrategy" && styles.errorForm}`}>
                                 <header>
                                     <div>Trigger Strategy</div>
@@ -313,12 +323,12 @@ const RecommendConfig = () => {
                                     <div className={styles.direction}>Direction compared to strategy:</div>
                                     <div className={styles.option}>
                                         <label className={`${styles.option} ${styles.short}`}>
-                                            <input type="radio" name="triggerDirection" value="same" readOnly checked={recommendResult?.strategy.direction === "same"} />
+                                            <input type="radio" name="triggerDirection" value="same" readOnly checked={recommendConfig?.strategy.direction === "same"} />
                                             <span>Same</span>
                                         </label>
 
                                         <label className={`${styles.option} ${styles.long}`}>
-                                            <input type="radio" name="triggerDirection" value="opposite" readOnly checked={recommendResult?.strategy.direction === "opposite"} />
+                                            <input type="radio" name="triggerDirection" value="opposite" readOnly checked={recommendConfig?.strategy.direction === "opposite"} />
                                             <span>Opposite</span>
                                         </label>
                                     </div>
@@ -344,7 +354,7 @@ const RecommendConfig = () => {
                     <div className={styles.needHelp} onClick={handleGetRecommend}>
                         Get recommend
                     </div>
-                    <button type="submit" disabled={!recommendResult} className={styles.saveButton} onClick={handleApplyConfig}>
+                    <button type="submit" disabled={recommendConfig.strategy.stoplosses.length === 0} className={styles.saveButton} onClick={handleApplyConfig}>
                         Apply config
                     </button>
                 </div>

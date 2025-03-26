@@ -48,7 +48,7 @@ const CustomizeConfig = () => {
 
     const tokenData = useSelector((state: RootState) => state.data);
     const storeConfig = useSelector((state: RootState) => state.config.config);
-    const { isShowNeedHelp, step } = useSelector((state: RootState) => state.system);
+    const { isShowNeedHelpCustomConfig, stepCustomConfig } = useSelector((state: RootState) => state.system);
 
     const [dataUpToDate, setDataUpToDate] = useState(false);
     const [config, setConfig] = useState<configType>(storeConfig);
@@ -267,7 +267,7 @@ const CustomizeConfig = () => {
 
     return (
         <form className={styles.config} onSubmit={handleSubmit}>
-            {isShowNeedHelp && step === 1 && (
+            {isShowNeedHelpCustomConfig && stepCustomConfig === 1 && (
                 <NeedHelp position="top-right">
                     <div className={helpStyles.helpConfig}>
                         <div className={helpStyles.title}>
@@ -472,14 +472,14 @@ const CustomizeConfig = () => {
                 )}
             </div>
             <footer>
-                {isShowNeedHelp && step === 2 && (
+                {isShowNeedHelpCustomConfig && stepCustomConfig === 2 && (
                     <NeedHelp position="top-right">
                         <div className={helpStyles.helpApplyButton}>
                             <span>You have to apply config to save it.</span>
                         </div>
                     </NeedHelp>
                 )}
-                <div className={styles.needHelp} onClick={() => dispatch(needHelpActions.showNeedHelp())}>
+                <div className={styles.needHelp} onClick={() => dispatch(systemActions.showNeedHelp())}>
                     Need help ?
                 </div>
                 <button type="submit" className={styles.saveButton}>
