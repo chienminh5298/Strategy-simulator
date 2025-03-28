@@ -1,4 +1,4 @@
-import { configType } from "@root/src/component/config/customize";
+import { configType } from "@src/component/config/customize";
 import { createSlice } from "@reduxjs/toolkit";
 
 export interface RecommendConfigType extends configType {

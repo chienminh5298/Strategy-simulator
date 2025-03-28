@@ -3,7 +3,7 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 import styles from "@src/component/tab/analyse/analyse.module.scss";
 import { toUSD } from "@src/utils";
 import { useSelector } from "react-redux";
-import { RootState } from "@root/src/redux/store";
+import { RootState } from "@src/redux/store";
 
 const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -32,7 +32,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const ValueByMonth = () => {
-    const data = useSelector((state: RootState) => state.chart.analyse.profitByMonthlyChart);
+    const data = useSelector((state: RootState) => state.chartConfig.analyse.profitByMonthlyChart);
 
     return (
         <ResponsiveContainer width="90%" height={250}>

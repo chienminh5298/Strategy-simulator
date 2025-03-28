@@ -4,11 +4,11 @@ import { toUSD } from "@src/utils";
 import ValueOverTime from "@src/component/tab/analyse/chart/valueOverTime";
 import ValueByMonth from "@src/component/tab/analyse/chart/valueByMonth";
 import { useSelector } from "react-redux";
-import { RootState } from "@root/src/redux/store";
+import { RootState } from "@src/redux/store";
 
 const AnalyseTab = () => {
     const config = useSelector((state: RootState) => state.config.config);
-    const { overView, strategyBreakDown, triggerStrategyBreakDown } = useSelector((state: RootState) => state.chart.analyse);
+    const { overView, strategyBreakDown, triggerStrategyBreakDown } = useSelector((state: RootState) => state.chartConfig.analyse);
 
     // Render configuration strategy & triggerStrategy
     let renderStrategy = config.strategy.stoplosses.map((stoploss, idx) => (

@@ -1,5 +1,6 @@
 import PleaseRunBacktest from "@src/component/tab/pleaseRunBacktest";
 import HistoryTab from "@src/component/tab/history/history";
+import DcaHistoryTab from "@src/component/tab/history/dcaHistory";
 import AnalyseTab from "@src/component/tab/analyse/analyse";
 import ConfigsRecord from "@src/component/tab/configRecord";
 import React, { useEffect, useState } from "react";
@@ -8,10 +9,22 @@ import { useSelector } from "react-redux";
 import styles from "@src/App.module.scss";
 
 const Tab = () => {
-    const [tab, setTab] = useState(<HistoryTab />);
-    const [defaultChecked, setDefaultChecked] = useState("history");
-    const dataChart = useSelector((state: RootState) => state.chart.data);
+    const dataChart = useSelector((state: RootState) => state.chartConfig.data);
     const isBacktestRunning = useSelector((state: RootState) => state.config.isBacktestRunning);
+    const currentView = useSelector((state: RootState) => state.system.currentView);
+
+    const [tab, setTab] = useState(<DcaHistoryTab />);
+    const [defaultChecked, setDefaultChecked] = useState("history");
+
+    useEffect(() => {
+        if (defaultChecked === "history") {
+            if (currentView === "dca") {
+                setTab(<DcaHistoryTab />);
+            }else{
+                setTab(<HistoryTab />);
+            }
+        }
+    }, [currentView, defaultChecked]);
 
     const handleTab = (tabName: string) => {
         switch (tabName) {
@@ -27,7 +40,11 @@ const Tab = () => {
                 setDefaultChecked(tabName);
                 break;
             default:
-                setTab(<HistoryTab />);
+                if (currentView === "dca") {
+                    setTab(<DcaHistoryTab />);
+                } else {
+                    setTab(<HistoryTab />);
+                }
                 setDefaultChecked("history");
         }
     };
@@ -35,7 +52,7 @@ const Tab = () => {
     useEffect(() => {
         if (Object.keys(dataChart).length === 0) {
             setDefaultChecked("history");
-            setTab(<HistoryTab />);
+            // setTab(<HistoryTab />);
         }
     }, [dataChart]);
     return (

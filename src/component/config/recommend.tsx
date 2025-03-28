@@ -15,7 +15,7 @@ import { errorMessage } from "@src/component/config/errorMessage";
 import useFetchYearData from "@src/customHook/fetchTokenDataByYear";
 import { checkDate, configType, getLastDate } from "@src/component/config/customize";
 import CurrencyInput from "react-currency-input-field";
-import { chartActions } from "@src/redux/chartReducer";
+import { chartConfigActions } from "@src/redux/chartConfigReducer";
 
 const RecommendConfig = () => {
     const storeRecommendConfig = useSelector((state: RootState) => state.config.recommendConfig);
@@ -181,7 +181,6 @@ const RecommendConfig = () => {
         toast.success("Apply config successfully. You can run backtest now.");
     };
 
-    console.log(recommendConfig)
     return (
         <form className={styles.config}>
             <div className={styles.content}>

@@ -21,6 +21,7 @@ export const recommendLogic = (rcConfig: RecommendConfigType, data: { [date: str
             fitness: simulate({ data, rcConfig: config }),
         };
     });
+    
     for (let gen = 0; gen < GENERATIONS; gen++) {
         population.sort((a, b) => b.fitness - a.fitness);
         const parents = population.slice(0, 2); // Select the top 2 individuals as parents
@@ -364,48 +365,17 @@ const getDate = (date: string) => {
     return date.split("T")[0];
 };
 
-const getAverangeProfit = (data: { [date: string]: candleType }, direction: "same" | "opposite") => {
-    const dayData = getDayData(data);
-    const dayDataValues = Object.values(dayData);
-
-    let profitPerDay: number[] = [];
-
-    for (let i = 1; i < dayDataValues.length; i++) {
-        const prevDay = dayDataValues[i - 1];
-        const today = dayDataValues[i];
-        let percent = 0;
-        if (direction === "same") {
-            if (prevDay.Open > prevDay.Close) {
-                // Red candle
-                percent = ((today.Open - today.Lowest) * 100) / today.Open;
-            } else {
-                // Green candle
-                percent = ((today.Highest - today.Open) * 100) / today.Open;
-            }
-        } else {
-            if (prevDay.Open > prevDay.Close) {
-                // Red candle
-                percent = ((today.Highest - today.Open) * 100) / today.Open;
-            } else {
-                // Green candle
-                percent = ((today.Open - today.Lowest) * 100) / today.Open;
-            }
-        }
-        profitPerDay.push(percent);
-    }
-    return profitPerDay.reduce((total, day) => total + day, 0) / profitPerDay.length;
-};
-
 // This function will convert candle 5m to candle 1D
-const getDayData = (data: { [date: string]: candleType }) => {
+export const getDayData = (data: { [date: string]: candleType }) => {
     const dataValues = Object.values(data);
     let dayData: {
         [date: string]: {
             Open: number;
             Date: string;
-            Highest: number;
-            Lowest: number;
+            High: number;
+            Low: number;
             Close: number;
+            Volume: number;
         };
     } = {};
     for (let i = 481; i < dataValues.length; i++) {
@@ -415,17 +385,18 @@ const getDayData = (data: { [date: string]: candleType }) => {
             dayData[date] = {
                 Open: candle.Open,
                 Date: date,
-                Lowest: candle.Low,
-                Highest: candle.High,
+                Low: candle.Low,
+                High: candle.High,
                 Close: data[`${date}T23:55:00.000Z`].Close,
+                Volume: candle.Volume,
             };
         } else {
             if (dayData[date]) {
-                if (candle.Close < dayData[date].Lowest) {
-                    dayData[date].Lowest = candle.Low;
+                if (candle.Close < dayData[date].Low) {
+                    dayData[date].Low = candle.Low;
                 }
-                if (candle.High > dayData[date].Highest) {
-                    dayData[date].Highest = candle.High;
+                if (candle.High > dayData[date].High) {
+                    dayData[date].High = candle.High;
                 }
             }
         }

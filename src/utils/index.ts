@@ -1,5 +1,5 @@
 import { OrderType } from "@src/utils/backtestLogic";
-import { configType } from "@root/src/component/config/customize";
+import { configType } from "@src/component/config/customize";
 
 export function convertToUTCDateTime(isoString: string) {
     // Create a Date object from the ISO string

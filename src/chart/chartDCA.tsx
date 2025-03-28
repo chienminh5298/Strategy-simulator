@@ -3,14 +3,14 @@ import { ColorType, createChart } from "lightweight-charts";
 import styles from "@src/App.module.scss";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../redux/store";
-import { configActions } from "../redux/configReducer";
-import { chartActions } from "../redux/chartReducer";
+import { dcaActions } from "../redux/dcaReducer";
+import { chartDCAActions } from "@src/redux/chartDCAReducer";
 
 const Chart = () => {
     const dispatch = useDispatch();
-    const { data, duration } = useSelector((state: RootState) => state.chart);
+    const { data, duration } = useSelector((state: RootState) => state.chartDCA);
     const chartContainerRef = useRef<HTMLDivElement>(null);
-
+    
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
@@ -70,7 +70,8 @@ const Chart = () => {
                     close: temp.candle.Close,
                     volume: temp.candle.Volume,
                     openOrderSide: temp.openOrderSide,
-                    executedOrder: temp.executedOrder,
+                    dcaExecutedOrder: temp.dcaExecutedOrder,
+                    openOrder: temp.openOrder,
                 };
             });
 
@@ -89,12 +90,18 @@ const Chart = () => {
             intervalID = setInterval(() => {
                 const update = streamingDataProvider.next();
                 const dateData = update.value;
-                if (dateData !== null && dateData.executedOrder) {
-                    dispatch(chartActions.updateHistory(dateData.executedOrder));
+                if (dateData !== null) {
+                    if (dateData.dcaExecutedOrder) {
+                        dispatch(chartDCAActions.updateHistory(dateData.dcaExecutedOrder)); // ////////////////////////
+                        dispatch(chartDCAActions.removeOpenOrder(dateData.dcaExecutedOrder)); // ////////////////////////
+                    }
+                    if (dateData.openOrder) {
+                        dispatch(chartDCAActions.addOpenOrder(dateData.openOrder));
+                    }
                 }
                 if (update.done) {
                     clearInterval(intervalID);
-                    dispatch(configActions.updateIsBacktestRunning(false));
+                    dispatch(dcaActions.updateIsBacktestRunning(false));
                     return;
                 }
 
@@ -133,7 +140,7 @@ const Chart = () => {
                         position: text === "SHORT" ? "aboveBar" : "belowBar",
                         color: text === "SHORT" ? "#ef476f" : "#06d6a0",
                         shape,
-                        text,
+                        text: text === "SHORT" ? "S" : "B",
                         size: 2,
                     });
                     candleSeries.setMarkers(markers);

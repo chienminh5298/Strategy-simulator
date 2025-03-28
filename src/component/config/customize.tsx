@@ -12,13 +12,13 @@ import NeedHelp from "@src/component/needHelp";
 import { convertToUTCDateTime } from "@src/utils";
 import { dataActions } from "@src/redux/dataReducer";
 import CurrencyInput from "react-currency-input-field";
-import { chartActions } from "@src/redux/chartReducer";
 import { configActions } from "@src/redux/configReducer";
 import { systemActions } from "@src/redux/systemReducer";
 import styles from "@src/component/config/customize.module.scss";
 import { errorMessage } from "@src/component/config/errorMessage";
 import helpStyles from "@src/component/needHelp/index.module.scss";
 import useFetchYearData from "@src/customHook/fetchTokenDataByYear";
+import { chartConfigActions } from "@src/redux/chartConfigReducer";
 
 export type StoplossType = {
     target: number;
@@ -210,7 +210,7 @@ const CustomizeConfig = () => {
             setConfig(newConfig); // This ensures UI re-render
             dispatch(configActions.updateIsConfigCorrect(true));
             dispatch(configActions.updateConfig(newConfig)); // Use the newConfig here
-            dispatch(chartActions.resetState());
+            dispatch(chartConfigActions.resetState());
             dispatch(configActions.updateIsBacktestRunning(false));
             toast.success("Apply config successfully. You can run backtest now.");
         } else {
@@ -479,7 +479,7 @@ const CustomizeConfig = () => {
                         </div>
                     </NeedHelp>
                 )}
-                <div className={styles.needHelp} onClick={() => dispatch(systemActions.showNeedHelp())}>
+                <div className={styles.needHelp} onClick={() => dispatch(systemActions.showNeedHelp({type: "customize"}))}>
                     Need help ?
                 </div>
                 <button type="submit" className={styles.saveButton}>

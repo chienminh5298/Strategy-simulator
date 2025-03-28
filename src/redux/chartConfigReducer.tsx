@@ -83,5 +83,5 @@ const chartSlice = createSlice({
     },
 });
 
-export const chartActions = chartSlice.actions;
+export const chartConfigActions = chartSlice.actions;
 export default chartSlice.reducer;

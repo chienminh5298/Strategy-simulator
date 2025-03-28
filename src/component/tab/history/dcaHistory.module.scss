@@ -1,0 +1,66 @@
+.container {
+    border: 1px solid black;
+    border-top: none;
+    display: flex;
+    padding: 10px;
+    gap: 10px;
+    .basketOrder,
+    .history {
+        header {
+            display: flex;
+            background-color: gray;
+            padding: 10px;
+            justify-content: space-between;
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+        .table {
+            display: grid;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 10px;
+            .cell {
+                padding: 10px;
+                text-align: center;
+                font-size: 14px;
+            }
+            // Header styling
+            .header {
+                font-weight: bold;
+                background-color: gray;
+                color: white;
+            }
+        }
+    }
+    .basketOrder {
+        flex: 1;
+        .table {
+            grid-template-columns: repeat(3, 1fr); // 8 equal columns
+            // Alternate row background color for readability
+            .cell:nth-child(6n + 4),
+            .cell:nth-child(6n + 5),
+            .cell:nth-child(6n + 6) {
+                background-color: #e9ecef;
+            }
+        }
+    }
+    .history {
+        flex: 2.5;
+        .table {
+            grid-template-columns: repeat(6, 1fr); // 8 equal columns
+            .cell:nth-child(12n + 7),
+            .cell:nth-child(12n + 8),
+            .cell:nth-child(12n + 9),
+            .cell:nth-child(12n + 10),
+            .cell:nth-child(12n + 11),
+            .cell:nth-child(12n + 12) {
+                background-color: #e9ecef;
+            }
+        }
+        .buy {
+            color: green;
+            font-weight: bold;
+        }
+    }
+}

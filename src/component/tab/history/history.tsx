@@ -7,7 +7,7 @@ import { RootState } from "@src/redux/store";
 import { convertToUTCDateTime, toUSD } from "@src/utils";
 
 const HistoryTab = () => {
-    const visibleItems = useSelector((state: RootState) => state.chart.history);
+    const visibleItems = useSelector((state: RootState) => state.chartConfig.history);
     const value = useSelector((state: RootState) => state.config.config.value);
     const [sum, setSum] = useState(0);
 

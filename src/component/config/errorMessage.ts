@@ -1,4 +1,4 @@
-export const errorMessage = (type: "token" | "year" | "value" | "strategy" | "triggerStrategy") => {
+export const errorMessage = (type: "token" | "year" | "value" | "total order" | "rsi" | "profit percent" | "value dca" | "strategy" | "triggerStrategy") => {
     let response;
     switch (type) {
         case "token":
@@ -9,6 +9,18 @@ export const errorMessage = (type: "token" | "year" | "value" | "strategy" | "tr
             break;
         case "value":
             response = "Value can't less than 500$";
+            break;
+        case "value dca":
+            response = "Value can't less than 100$";
+            break;
+        case "total order":
+            response = "Total order can't less than 10";
+            break;
+        case "rsi":
+            response = "A good RSI config are:  7 < rsiLength < 30, 0 < rsiDcaIn, rsiDcaOut < 100";
+            break;
+        case "profit percent":
+            response = "Profit percent has to be greater than 0";
             break;
         case "strategy":
         case "triggerStrategy":

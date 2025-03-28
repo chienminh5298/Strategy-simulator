@@ -1,4 +1,4 @@
-import { configType, StoplossType } from "@root/src/component/config/customize";
+import { configType, StoplossType } from "@src/component/config/customize";
 import { candleType } from "@src/redux/dataReducer";
 
 export type OrderType = {
@@ -14,11 +14,15 @@ export type OrderType = {
     stoplossIdx: number;
 };
 
+export type dcaOpenOrderType = { id: number; entryTime: string; entryPrice: number; qty: number };
+
 export type ChartCandleType = {
     [date: string]: {
         candle: candleType;
         executedOrder?: Required<OrderType>;
         openOrderSide?: "long" | "short";
+        openOrder?: dcaOpenOrderType;
+        dcaExecutedOrder?: Required<OrderType>[]; // Optional, for DCA orders
     };
 };
 
@@ -210,7 +214,7 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
             } else {
                 // Create new order
                 processCreateNewMidNightOrder(data, config, candle, i);
-                
+
                 // Check hit stoploss for new oder just opned (In case hit stoploss at first candle of the day)
                 checkHitStoploss(candle, config);
                 checkHitTarget(candle, config);

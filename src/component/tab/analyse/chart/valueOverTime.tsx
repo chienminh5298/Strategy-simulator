@@ -3,7 +3,7 @@ import React from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import styles from "@src/component/tab/analyse/analyse.module.scss";
 import { useSelector } from "react-redux";
-import { RootState } from "@root/src/redux/store";
+import { RootState } from "@src/redux/store";
 
 const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -19,7 +19,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const ValueOverTime = () => {
-    const data = useSelector((state: RootState) => state.chart.analyse.ValueOverTimeChart);
+    const data = useSelector((state: RootState) => state.chartConfig.analyse.ValueOverTimeChart);
 
     return (
         <ResponsiveContainer width="90%" height={250}>
