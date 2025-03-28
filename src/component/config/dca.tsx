@@ -21,7 +21,7 @@ import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 import { chartDCAActions } from "@src/redux/chartDCAReducer";
 import { dcaLogic } from "@src/utils/dcaLogic";
 
-let firstRun = true;
+let firstRun = false;
 
 const Dca = () => {
     const dispatch = useDispatch();

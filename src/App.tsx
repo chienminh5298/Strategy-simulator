@@ -58,7 +58,7 @@ const App = () => {
         if (isError) {
             toast.error("Can't fetch data.");
         }
-        // dispatch(systemActions.updateLoading(!isFetchingData));
+        dispatch(systemActions.updateLoading(!isFetchingData));
         if (isFetchingData) {
             dispatch(systemActions.showNeedHelp({ type: "customize" }));
         }
