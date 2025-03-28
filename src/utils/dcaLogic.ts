@@ -189,7 +189,7 @@ export const simulateDCA = (rcConfig: DCAConfig, dataHourly: { [date: string]: c
 
         const fitness = sum - weightHold * openOrderCount - weightAvgPrice * avgEntryPrice;
 
-        return sum;
+        return fitness;
     }
     return response;
 };

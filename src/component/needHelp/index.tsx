@@ -21,6 +21,9 @@ const NeedHelp: React.FC<NeedHelpProps> = ({ children, position }) => {
         case "middle-right":
             className = styles.middle_right;
             break;
+        case "middle-left":
+            className = styles.middle_left;
+            break;
         default:
             className = styles.bottom_left;
     }

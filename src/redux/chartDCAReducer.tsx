@@ -18,12 +18,14 @@ const initialState: {
         [orderId: number]: dcaOpenOrderType;
     };
     duration: number;
+    currentPrice: number;
 } = {
     data: {},
     analyse: initialAnalyse,
     history: [],
     openOrder: {},
     duration: 5,
+    currentPrice: 0,
 };
 
 const chartSlice = createSlice({
@@ -52,6 +54,9 @@ const chartSlice = createSlice({
             for (const order of deleteArr) {
                 delete state.openOrder[order.id];
             }
+        },
+        updateCurrentPrice(state, payload) {
+            state.currentPrice = payload.payload;
         },
     },
 });

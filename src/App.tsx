@@ -1,31 +1,33 @@
-import { faArrowRight, faGamepad, faRotate, faWarning } from "@fortawesome/free-solid-svg-icons";
-import helpStyles from "@src/component/needHelp/index.module.scss";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { candleType, dataActions } from "@src/redux/dataReducer";
-import { Bounce, toast, ToastContainer } from "react-toastify";
-import RecommendConfig from "@src/component/config/recommend";
-import CustomizeConfig from "@src/component/config/customize";
-import { systemActions } from "@src/redux/systemReducer";
-import { backtestLogic } from "@src/utils/backtestLogic";
-import { chartConfigActions } from "@src/redux/chartConfigReducer";
-import { chartDCAActions } from "@src/redux/chartDCAReducer";
-import { configActions } from "@src/redux/configReducer";
-import { useDispatch, useSelector } from "react-redux";
-import { Fragment, useEffect, useState } from "react";
-import { processDataForAnalyse } from "@src/utils";
-import { useQuery } from "@tanstack/react-query";
-import NeedHelp from "@src/component/needHelp";
 import "react-toastify/dist/ReactToastify.css";
-import { RootState } from "@src/redux/store";
-import styles from "@src/App.module.scss";
-import { fetchToken } from "@src/http";
+import { useQuery } from "@tanstack/react-query";
+import { Fragment, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Bounce, toast, ToastContainer } from "react-toastify";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowRight, faGamepad, faRotate, faWarning } from "@fortawesome/free-solid-svg-icons";
+
+
 import Tab from "@src/component/tab";
-import ChartConfig from "@src/chart/chartConfig";
+import { fetchToken } from "@src/http";
 import ChartDCA from "@src/chart/chartDCA";
-import Dca from "./component/config/dca";
-import { dcaActions } from "./redux/dcaReducer";
-import { get4hData, getHourlyData, simulateDCA } from "./utils/dcaLogic";
-import { getDayData } from "./utils/recommendLogic";
+import styles from "@src/App.module.scss";
+import Dca from "@src/component/config/dca";
+import { RootState } from "@src/redux/store";
+import NeedHelp from "@src/component/needHelp";
+import ChartConfig from "@src/chart/chartConfig";
+import { dcaActions } from "@src/redux/dcaReducer";
+import { processDataForAnalyse } from "@src/utils";
+import { getDayData } from "@src/utils/recommendLogic";
+import { backtestLogic } from "@src/utils/backtestLogic";
+import { configActions } from "@src/redux/configReducer";
+import { systemActions } from "@src/redux/systemReducer";
+import { chartDCAActions } from "@src/redux/chartDCAReducer";
+import CustomizeConfig from "@src/component/config/customize";
+import RecommendConfig from "@src/component/config/recommend";
+import { candleType, dataActions } from "@src/redux/dataReducer";
+import { chartConfigActions } from "@src/redux/chartConfigReducer";
+import helpStyles from "@src/component/needHelp/index.module.scss";
+import { get4hData, getHourlyData, simulateDCA } from "@src/utils/dcaLogic";
 
 const App = () => {
     const dispatch = useDispatch();
@@ -60,7 +62,7 @@ const App = () => {
         }
         dispatch(systemActions.updateLoading(!isFetchingData));
         if (isFetchingData) {
-            // dispatch(systemActions.showNeedHelp({ type: "customize" }));
+            dispatch(systemActions.showNeedHelp({ type: "customize" }));
         }
     }, [isError, isLoading]);
 
@@ -240,7 +242,7 @@ const App = () => {
                                         </div>
                                     </NeedHelp>
                                 )}
-                                {isShowNeedHelpDCA && stepDCA === 4 && (
+                                {isShowNeedHelpDCA && stepDCA === 5 && (
                                     <NeedHelp position="bottom-left">
                                         <div className={helpStyles.helpBox}>
                                             <div className={helpStyles.helpRunButton}>Let's run!</div>

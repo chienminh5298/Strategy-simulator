@@ -59,8 +59,23 @@
             }
         }
         .buy {
-            color: green;
+            color: #4bffb5;
             font-weight: bold;
+        }
+        .sell {
+            color: red;
+            font-weight: bold;
+        }
+        .totalPL {
+            position: relative;
+            .realizedTotal {
+                color: black;
+                font-weight: 600;
+            }
+            .totalContent {
+                display: flex;
+                gap: 5px;
+            }
         }
     }
 }

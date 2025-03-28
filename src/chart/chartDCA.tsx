@@ -10,7 +10,7 @@ const Chart = () => {
     const dispatch = useDispatch();
     const { data, duration } = useSelector((state: RootState) => state.chartDCA);
     const chartContainerRef = useRef<HTMLDivElement>(null);
-    
+
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
@@ -92,12 +92,13 @@ const Chart = () => {
                 const dateData = update.value;
                 if (dateData !== null) {
                     if (dateData.dcaExecutedOrder) {
-                        dispatch(chartDCAActions.updateHistory(dateData.dcaExecutedOrder)); // ////////////////////////
-                        dispatch(chartDCAActions.removeOpenOrder(dateData.dcaExecutedOrder)); // ////////////////////////
+                        dispatch(chartDCAActions.updateHistory(dateData.dcaExecutedOrder));
+                        dispatch(chartDCAActions.removeOpenOrder(dateData.dcaExecutedOrder));
                     }
                     if (dateData.openOrder) {
                         dispatch(chartDCAActions.addOpenOrder(dateData.openOrder));
                     }
+                    dispatch(chartDCAActions.updateCurrentPrice(dateData.close));
                 }
                 if (update.done) {
                     clearInterval(intervalID);

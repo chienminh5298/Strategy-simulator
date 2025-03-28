@@ -6,7 +6,7 @@ type SystemType = {
     isLoading: boolean;
     stepCustomConfig: number;
     stepDCA: number;
-    currentView: string;
+    currentView: "customize" | "dca";
 };
 const initialState: SystemType = {
     isShowNeedHelpCustomConfig: false,
@@ -14,11 +14,11 @@ const initialState: SystemType = {
     isLoading: false,
     stepCustomConfig: 0,
     stepDCA: 0,
-    currentView: "dca",
+    currentView: "customize",
 };
 
 const total_step_custom_config = 3;
-const total_step_DCA = 4;
+const total_step_DCA = 5;
 
 const systemSlice = createSlice({
     name: "needHelp",
