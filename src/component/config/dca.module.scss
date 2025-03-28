@@ -165,6 +165,71 @@
                 }
             }
         }
+        .timeFrame,
+        .buyCondition {
+            border-radius: 4px;
+            overflow: hidden;
+            background-color: gray;
+            border: rgba(0, 0, 0, 0.173) solid 1px;
+            margin-top: 10px;
+            padding: 10px;
+            color: white;
+            .direction {
+                color: white;
+            }
+            .side {
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+                padding: 0 10px;
+                flex-direction: column;
+
+                .option {
+                    flex: 1;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2px;
+                    border: 2px solid transparent;
+                    border-radius: 2px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: all 0.2s ease-in-out;
+                    position: relative;
+                    input {
+                        position: absolute;
+                        opacity: 0;
+                    }
+                    svg {
+                        margin-left: 5px;
+                    }
+                }
+                span {
+                    border: dashed 1px rgba(255, 255, 255, 0.321);
+                    color: rgba(0, 0, 0, 0.355);
+                    width: 100%;
+                    text-align: center;
+                    padding: 5px;
+                    border-radius: 3px;
+                    &:active {
+                        transform: translate(1px, 1px);
+                    }
+                }
+                // When SHORT is selected, change color
+                .short input[type="radio"]:checked ~ span {
+                    background-color: #ff4976;
+                    border: none;
+                    color: black;
+                }
+
+                // When LONG is selected, change color
+                .long input[type="radio"]:checked ~ span {
+                    background-color: #4bffb5;
+                    border: none;
+                    color: black;
+                }
+            }
+        }
     }
     footer {
         display: flex;

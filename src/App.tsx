@@ -60,7 +60,7 @@ const App = () => {
         }
         dispatch(systemActions.updateLoading(!isFetchingData));
         if (isFetchingData) {
-            dispatch(systemActions.showNeedHelp({ type: "customize" }));
+            // dispatch(systemActions.showNeedHelp({ type: "customize" }));
         }
     }, [isError, isLoading]);
 
@@ -74,9 +74,13 @@ const App = () => {
     const handleRun = () => {
         if (currentView === "dca") {
             if (dcaStore.isConfigCorrect) {
-                const dataHourly = getHourlyData(rawData);
-                // const dataHourly = get4hData(rawData);
-                const chartData = simulateDCA(dcaStore, dataHourly);
+                let dcaData = getHourlyData(rawData);
+                if (dcaStore.timeFrame === "4h") {
+                    dcaData = get4hData(rawData);
+                } else if (dcaStore.timeFrame === "1d") {
+                    dcaData = getDayData(rawData);
+                }
+                const chartData = simulateDCA(dcaStore, dcaData);
                 dispatch(chartDCAActions.resetState()); // Reset before run a new backtest
                 dispatch(chartDCAActions.updateData({ data: chartData }));
 

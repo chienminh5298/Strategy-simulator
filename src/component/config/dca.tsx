@@ -1,27 +1,27 @@
-import React, { Fragment, useEffect, useState } from "react";
-import styles from "./dca.module.scss";
-import { useSelector } from "react-redux";
-import { RootState } from "@src/redux/store";
-import { convertToUTCDateTime, toUSD } from "@src/utils";
-import { checkDate, getLastDate } from "./customize";
-import CurrencyInput from "react-currency-input-field";
-import { useMutation } from "@tanstack/react-query";
-import { mutationUpdateData } from "@src/http";
-import { useDispatch } from "react-redux";
-import { systemActions } from "@src/redux/systemReducer";
 import { toast } from "react-toastify";
-import useFetchYearData from "@src/customHook/fetchTokenDataByYear";
+import { RootState } from "@src/redux/store";
+import { useMutation } from "@tanstack/react-query";
+import { Fragment, useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import CurrencyInput from "react-currency-input-field";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
+
+import { mutationUpdateData } from "@src/http";
+import { dcaLogic } from "@src/utils/dcaLogic";
+import NeedHelp from "@src/component/needHelp";
 import { dataActions } from "@src/redux/dataReducer";
+import { convertToUTCDateTime, toUSD } from "@src/utils";
+import { systemActions } from "@src/redux/systemReducer";
+import styles from "@src/component/config/dca.module.scss";
+import { chartDCAActions } from "@src/redux/chartDCAReducer";
 import { dcaActions, DCAConfig } from "@src/redux/dcaReducer";
 import { errorMessage } from "@src/component/config/errorMessage";
-import NeedHelp from "../needHelp";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import helpStyles from "@src/component/needHelp/index.module.scss";
-import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
-import { chartDCAActions } from "@src/redux/chartDCAReducer";
-import { dcaLogic } from "@src/utils/dcaLogic";
+import useFetchYearData from "@src/customHook/fetchTokenDataByYear";
+import { checkDate, getLastDate } from "@src/component/config/customize";
 
-let firstRun = false;
+let firstRun = true;
 
 const Dca = () => {
     const dispatch = useDispatch();
@@ -399,6 +399,41 @@ const Dca = () => {
                             </div>
                         </Fragment>
                     )}
+                </div>
+                <div className={styles.buyCondition}>
+                    <div className={styles.side}>
+                        <div className={styles.direction}>Buy condition:</div>
+                        <div className={styles.option}>
+                            <label className={`${styles.option} ${styles.long}`}>
+                                <input type="radio" name="buyCondition" value="min" defaultChecked={DCAConfig.buyCondition === "min"} onChange={() => setDCAConfig((prevConfig) => ({ ...prevConfig, buyCondition: "min" }))} />
+                                <span>Minimum</span>
+                            </label>
+
+                            <label className={`${styles.option} ${styles.long}`}>
+                                <input type="radio" name="buyCondition" value="avg" defaultChecked={DCAConfig.buyCondition === "avg"} onChange={() => setDCAConfig((prevConfig) => ({ ...prevConfig, buyCondition: "avg" }))} />
+                                <span>Averange</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div className={styles.timeFrame}>
+                    <div className={styles.side}>
+                        <div className={styles.direction}>Time frame:</div>
+                        <div className={styles.option}>
+                            <label className={`${styles.option} ${styles.long}`}>
+                                <input type="radio" name="timeFrame" value="1h" defaultChecked={DCAConfig.timeFrame === "1h"} onChange={() => setDCAConfig((prevConfig) => ({ ...prevConfig, timeFrame: "1h" }))} />
+                                <span>1H</span>
+                            </label>
+                            <label className={`${styles.option} ${styles.long}`}>
+                                <input type="radio" name="timeFrame" value="4h" defaultChecked={DCAConfig.timeFrame === "4h"} onChange={() => setDCAConfig((prevConfig) => ({ ...prevConfig, timeFrame: "4h" }))} />
+                                <span>4H</span>
+                            </label>
+                            <label className={`${styles.option} ${styles.long}`}>
+                                <input type="radio" name="timeFrame" value="1d" defaultChecked={DCAConfig.timeFrame === "1d"} onChange={() => setDCAConfig((prevConfig) => ({ ...prevConfig, timeFrame: "1d" }))} />
+                                <span>1D</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
             <footer>

@@ -405,12 +405,12 @@ const CustomizeConfig = () => {
                         <div className={styles.direction}>Direction compared to previous day candle:</div>
                         <div className={styles.option}>
                             <label className={`${styles.option} ${styles.short}`}>
-                                <input type="radio" name="direction" value="same" defaultChecked={config.strategy.direction === "same"} onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, strategy: { stoplosses: [...prevConfig.strategy.stoplosses], direction: e.target.value as "same" } }))} />
+                                <input type="radio" name="direction" value="same" defaultChecked={config.strategy.direction === "same"} onChange={() => setConfig((prevConfig) => ({ ...prevConfig, strategy: { stoplosses: [...prevConfig.strategy.stoplosses], direction: "same" } }))} />
                                 <span>Same</span>
                             </label>
 
                             <label className={`${styles.option} ${styles.long}`}>
-                                <input type="radio" name="direction" value="opposite" defaultChecked={config.strategy.direction === "opposite"} onChange={(e) => setConfig((prevConfig) => ({ ...prevConfig, strategy: { stoplosses: [...prevConfig.strategy.stoplosses], direction: e.target.value as "opposite" } }))} />
+                                <input type="radio" name="direction" value="opposite" defaultChecked={config.strategy.direction === "opposite"} onChange={() => setConfig((prevConfig) => ({ ...prevConfig, strategy: { stoplosses: [...prevConfig.strategy.stoplosses], direction: "opposite" } }))} />
                                 <span>Opposite</span>
                             </label>
                         </div>
@@ -479,7 +479,7 @@ const CustomizeConfig = () => {
                         </div>
                     </NeedHelp>
                 )}
-                <div className={styles.needHelp} onClick={() => dispatch(systemActions.showNeedHelp({type: "customize"}))}>
+                <div className={styles.needHelp} onClick={() => dispatch(systemActions.showNeedHelp({ type: "customize" }))}>
                     Need help ?
                 </div>
                 <button type="submit" className={styles.saveButton}>

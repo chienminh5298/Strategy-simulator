@@ -1,7 +1,6 @@
-import { configType } from "../component/config/customize";
-import { candleType } from "../redux/dataReducer";
-import { DCAConfig } from "../redux/dcaReducer";
-import { ChartCandleType, OrderType, randomId } from "./backtestLogic";
+import { DCAConfig } from "@src/redux/dcaReducer";
+import { candleType } from "@src/redux/dataReducer";
+import { ChartCandleType, OrderType, randomId } from "@src/utils/backtestLogic";
 
 function randomPick<T>(arr: T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
@@ -23,7 +22,6 @@ export const dcaLogic = (rcConfig: DCAConfig, data: { [date: string]: candleType
         return {
             config,
             fitness: simulateDCA(rcConfig, dataHourly, true) as number,
-            // fitness đánh giá dựa trên tổng lợi nhuậnn, vậy có nên thêm order left vào tính cùng fitness hay không ?
         };
     });
 
@@ -42,8 +40,6 @@ export const dcaLogic = (rcConfig: DCAConfig, data: { [date: string]: candleType
     }
     const best = population.reduce((best, current) => (current.fitness > best.fitness ? current : best));
     return best.config;
-
-    // simulateDCA(rcConfig, dataHourly);
 };
 
 const generateArray = (from: number, to: number, step: number) => {
@@ -63,11 +59,14 @@ function randomConfig(rcConfig: DCAConfig): DCAConfig {
         rsiLength: randomPick(generateArray(5, 24, 1)),
         rsiDcaIn: randomPick(generateArray(10, 45, 1)),
         rsiDcaOut: randomPick(generateArray(50, 70, 1)),
+        buyCondition: randomPick(["avg", "min"]),
     };
 }
 
 function mutateConfig(config: DCAConfig): DCAConfig {
     const mutationRate = 0.3; // 10% chance to mutate each parameter
+    const buyConditions: ("min" | "avg")[] = ["min", "avg"];
+
     return {
         ...config,
         totalOrder: Math.random() < mutationRate ? randomPick(generateArray(10, 100, 10)) : config.totalOrder,
@@ -76,6 +75,7 @@ function mutateConfig(config: DCAConfig): DCAConfig {
         rsiLength: Math.random() < mutationRate ? randomPick(generateArray(5, 24, 1)) : config.rsiLength,
         rsiDcaIn: Math.random() < mutationRate ? randomPick(generateArray(10, 45, 1)) : config.rsiDcaIn,
         rsiDcaOut: Math.random() < mutationRate ? randomPick(generateArray(50, 70, 1)) : config.rsiDcaOut,
+        buyCondition: Math.random() < mutationRate ? randomPick(buyConditions.filter((opt) => opt !== config.buyCondition)) : config.buyCondition,
     };
 }
 
@@ -88,6 +88,7 @@ function crossoverConfig(a: DCAConfig, b: DCAConfig): DCAConfig {
         rsiLength: Math.random() < 0.5 ? a.rsiLength : b.rsiLength,
         rsiDcaIn: Math.random() < 0.5 ? a.rsiDcaIn : b.rsiDcaIn,
         rsiDcaOut: Math.random() < 0.5 ? a.rsiDcaOut : b.rsiDcaOut,
+        buyCondition: Math.random() < 0.5 ? a.buyCondition : b.buyCondition,
     };
 }
 
@@ -112,11 +113,7 @@ export const simulateDCA = (rcConfig: DCAConfig, dataHourly: { [date: string]: c
         const averangePrice = orders.reduce((sum, order) => sum + order.entryPrice, 0) / orders.length;
 
         if ((rcConfig.isRSI && hourRSI < rcConfig.rsiDcaIn && hour.Open > hour.Close) || (!rcConfig.isRSI && hour.Open > hour.Close)) {
-            // Nếu RSI < 35 hoặc không dùng RSI và giá mở cửa > giá đóng cửa
-            // if (hour.Close <= firstOrder?.entryPrice || !firstOrder) {
-            if (hour.Close < firstOrder?.entryPrice || !firstOrder) {
-                // Chỉ DCA in khi giá thấp hơn giá nhỏ nhất trong basket
-                // Thử DCA in khi giá thấp hơn giá trung bình trong basket
+            if ((rcConfig.buyCondition === "min" && hour.Close < firstOrder?.entryPrice) || (rcConfig.buyCondition === "avg" && hour.Close < averangePrice) || !firstOrder) {
                 // Nghĩ về việc mua nhiều tiền hơn khi giá càng thấp
                 // Áp dụng thanh lý nhiều lệnh nếu đủ yêu cầu
                 if (Object.keys(openOrder).length < TOTAL_ORDER) {
@@ -192,7 +189,7 @@ export const simulateDCA = (rcConfig: DCAConfig, dataHourly: { [date: string]: c
 
         const fitness = sum - weightHold * openOrderCount - weightAvgPrice * avgEntryPrice;
 
-        return fitness;
+        return sum;
     }
     return response;
 };

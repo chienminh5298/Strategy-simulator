@@ -10,6 +10,8 @@ export type DCAConfig = {
     rsiLength: number;
     rsiDcaIn: number;
     rsiDcaOut: number;
+    buyCondition: "min" | "avg";
+    timeFrame: "1h" | "4h" | "1d";
     isConfigCorrect: boolean;
     isBacktestRunning: boolean;
 };
@@ -23,6 +25,8 @@ const initialState: DCAConfig = {
     rsiLength: 14,
     rsiDcaIn: 35,
     rsiDcaOut: 65,
+    buyCondition: "min",
+    timeFrame: "1h",
     isConfigCorrect: false,
     isBacktestRunning: false,
 };
