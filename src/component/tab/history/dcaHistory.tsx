@@ -21,8 +21,6 @@ const DcaHistory = () => {
             </Fragment>
         ));
 
-    const sumOpenOrders = Object.values(openOrder).length * dcaConfig.value;
-
     const renderHistory = history.map((order, idx) => (
         <Fragment key={idx}>
             <div className={`${styles.cell}`}>{convertToUTCDateTime(order.entryTime)}</div>

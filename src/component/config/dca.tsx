@@ -36,7 +36,7 @@ const Dca = () => {
 
     useEffect(() => {
         if (firstRun) {
-            dispatch(systemActions.showNeedHelp({ type: "dca" }));
+            // dispatch(systemActions.showNeedHelp({ type: "dca" }));
             firstRun = false;
         }
     }, []);
@@ -474,7 +474,7 @@ export default Dca;
 const checkConfig = (config: DCAConfig) => {
     if (config.token === "") return "token";
     if (config.year === "") return "year";
-    if (config.value < 100) return "value dca";
+    if (config.value < 10) return "value dca";
     if (config.totalOrder < 10) return "total order";
     if (config.profitPercent <= 0) return "profit percent";
     if (config.isRSI) {

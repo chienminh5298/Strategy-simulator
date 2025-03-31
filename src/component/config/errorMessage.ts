@@ -11,7 +11,7 @@ export const errorMessage = (type: "token" | "year" | "value" | "total order" | 
             response = "Value can't less than 500$";
             break;
         case "value dca":
-            response = "Value can't less than 100$";
+            response = "Value can't less than 10$";
             break;
         case "total order":
             response = "Total order can't less than 10";

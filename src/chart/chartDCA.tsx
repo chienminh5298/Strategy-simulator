@@ -9,6 +9,7 @@ import { chartDCAActions } from "@src/redux/chartDCAReducer";
 const Chart = () => {
     const dispatch = useDispatch();
     const { data, duration } = useSelector((state: RootState) => state.chartDCA);
+    const DCAconfig = useSelector((state: RootState) => state.dca);
     const chartContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -72,6 +73,7 @@ const Chart = () => {
                     openOrderSide: temp.openOrderSide,
                     dcaExecutedOrder: temp.dcaExecutedOrder,
                     openOrder: temp.openOrder,
+                    date: key.split("T")[0],
                 };
             });
 
@@ -87,18 +89,46 @@ const Chart = () => {
             const streamingDataProvider = getNextRealtimeUpdate(ddd);
             const markers: any[] = [];
 
+            // Analyse data
+            let basket: { [orderId: string]: { qty: number } } = {};
+            let history: any[] = [];
+            let maxRealLossPL = 0;
+            let maxRealProfitPL = 0;
+            let currentPrice = 0;
+            let historyPL = 0;
+            let maxOrder = 0;
+
             intervalID = setInterval(() => {
                 const update = streamingDataProvider.next();
                 const dateData = update.value;
                 if (dateData !== null) {
+                    currentPrice = dateData.close;
+
+                    const { lossPL, profitPL } = updateRealPL({ lossPL: maxRealLossPL, profitPL: maxRealProfitPL, basket, currentPrice, value: DCAconfig.value, historyPL }); // For analyse
+                    maxRealLossPL = lossPL; // For analyse
+                    maxRealProfitPL = profitPL; // For analyse
+
                     if (dateData.dcaExecutedOrder) {
+                        history = [...history, ...dateData.dcaExecutedOrder]; // For analyse
+                        historyPL = history.reduce((total, o) => o.profit + total, 0); // For analyse
+
+                        for (const o of dateData.dcaExecutedOrder) {
+                            delete basket[o.id];
+                        }
+
                         dispatch(chartDCAActions.updateHistory(dateData.dcaExecutedOrder));
                         dispatch(chartDCAActions.removeOpenOrder(dateData.dcaExecutedOrder));
                     }
                     if (dateData.openOrder) {
-                        dispatch(chartDCAActions.addOpenOrder(dateData.openOrder));
+                        const openOrder = dateData.openOrder;
+                        basket[openOrder.id] = openOrder;
+
+                        if (Object.keys(basket).length > maxOrder) maxOrder = Object.keys(basket).length;
+
+                        dispatch(chartDCAActions.addOpenOrder(openOrder));
                     }
-                    dispatch(chartDCAActions.updateCurrentPrice(dateData.close));
+                    dispatch(chartDCAActions.updateCurrentPrice({ currentPrice, orgBasketValue: Object.keys(basket).length * DCAconfig.value, date: dateData.date }));
+                    dispatch(chartDCAActions.updateAnalyse({ maxRealLossPL, maxRealProfitPL, maxOrder })); // For analyse
                 }
                 if (update.done) {
                     clearInterval(intervalID);
@@ -161,3 +191,25 @@ const Chart = () => {
 };
 
 export default Chart;
+
+type UpdateRealPLType = {
+    lossPL: number;
+    profitPL: number;
+    basket: { [orderId: string]: { qty: number } };
+    currentPrice: number;
+    value: number;
+    historyPL: number;
+};
+const updateRealPL = ({ lossPL, profitPL, basket, currentPrice, value, historyPL }: UpdateRealPLType) => {
+    const oriValue = Object.values(basket).length * value;
+    const basketValue = Object.values(basket).reduce((total, o) => total + o.qty, 0) * currentPrice;
+    const realPL = historyPL + basketValue - oriValue;
+    if (realPL > profitPL) {
+        profitPL = realPL;
+    }
+    if (realPL < lossPL) {
+        lossPL = realPL;
+    }
+
+    return { lossPL, profitPL };
+};

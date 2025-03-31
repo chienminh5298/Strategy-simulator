@@ -176,7 +176,7 @@ const RecommendConfig = () => {
         e.preventDefault();
         dispatch(configActions.updateIsConfigCorrect(true));
         dispatch(configActions.updateConfig(recommendConfig)); // Use the newConfig here
-        dispatch(chartActions.resetState());
+        dispatch(chartConfigActions.resetState());
         dispatch(configActions.updateIsBacktestRunning(false));
         toast.success("Apply config successfully. You can run backtest now.");
     };

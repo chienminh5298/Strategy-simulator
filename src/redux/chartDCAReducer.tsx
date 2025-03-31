@@ -2,17 +2,35 @@ import { OverViewType, ProfitByMonthlyChartType, StrategyBreakDownType, ValueOve
 import { ChartCandleType, dcaOpenOrderType, OrderType } from "@src/utils/backtestLogic";
 import { createSlice } from "@reduxjs/toolkit";
 
+type AnalyseDCAType = {
+    ValueOverTimeChart: ValueOverTimeChartType[];
+    overall: {
+        maxOrder: number;
+        maxLoss: number;
+        maxProfit: number;
+    };
+    basket: {
+        leftOrder: number;
+        qty: number;
+    };
+};
+
 const initialAnalyse = {
-    profitByMonthlyChart: [],
     ValueOverTimeChart: [],
+    overall: {
+        maxOrder: 0,
+        maxLoss: 0,
+        maxProfit: 0,
+    },
+    basket: {
+        leftOrder: 0,
+        qty: 0,
+    },
 };
 
 const initialState: {
     data: ChartCandleType;
-    analyse: {
-        ValueOverTimeChart: ValueOverTimeChartType[];
-        profitByMonthlyChart: ProfitByMonthlyChartType[];
-    };
+    analyse: AnalyseDCAType;
     history: Required<OrderType>[];
     openOrder: {
         [orderId: number]: dcaOpenOrderType;
@@ -33,8 +51,8 @@ const chartSlice = createSlice({
     initialState: initialState,
     reducers: {
         updateData(state, payload) {
-            const { data, analyse } = payload.payload;
-            Object.assign(state, { ...state, data, analyse });
+            const { data } = payload.payload;
+            Object.assign(state, { ...state, data });
         },
         resetState(state, payload) {
             state.data = {};
@@ -48,15 +66,31 @@ const chartSlice = createSlice({
         addOpenOrder(state, payload) {
             const newOrder = payload.payload;
             state.openOrder[newOrder.id] = newOrder;
+
+            // For analyse
+            state.analyse.basket.leftOrder = Object.keys(state.openOrder).length;
+            state.analyse.basket.qty = Object.values(state.openOrder).reduce((total, o) => o.qty + total, 0);
         },
         removeOpenOrder(state, payload) {
             const deleteArr = payload.payload;
             for (const order of deleteArr) {
                 delete state.openOrder[order.id];
             }
+            // For analyse
+            state.analyse.basket.leftOrder = Object.keys(state.openOrder).length;
+            state.analyse.basket.qty = Object.values(state.openOrder).reduce((total, o) => o.qty + total, 0);
         },
         updateCurrentPrice(state, payload) {
-            state.currentPrice = payload.payload;
+            const { currentPrice, orgBasketValue, date } = payload.payload;
+            state.currentPrice = currentPrice;
+            const currentBasketValue = Object.values(state.openOrder).reduce((total, o) => o.qty + total, 0) * currentPrice;
+            const historyPL = state.history.reduce((total, o) => o.profit + total, 0);
+            const realPL = historyPL + (currentBasketValue - orgBasketValue);
+            state.analyse.ValueOverTimeChart.push({ date, value: realPL });
+        },
+        updateAnalyse(state, payload) {
+            const { maxRealLossPL, maxRealProfitPL, maxOrder } = payload.payload;
+            state.analyse.overall = { maxLoss: maxRealLossPL, maxProfit: maxRealProfitPL, maxOrder };
         },
     },
 });

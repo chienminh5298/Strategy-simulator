@@ -6,7 +6,6 @@ import { Bounce, toast, ToastContainer } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight, faGamepad, faRotate, faWarning } from "@fortawesome/free-solid-svg-icons";
 
-
 import Tab from "@src/component/tab";
 import { fetchToken } from "@src/http";
 import ChartDCA from "@src/chart/chartDCA";
@@ -16,9 +15,9 @@ import { RootState } from "@src/redux/store";
 import NeedHelp from "@src/component/needHelp";
 import ChartConfig from "@src/chart/chartConfig";
 import { dcaActions } from "@src/redux/dcaReducer";
-import { processDataForAnalyse } from "@src/utils";
+import { processConfigDataForAnalyse } from "@src/utils";
 import { getDayData } from "@src/utils/recommendLogic";
-import { backtestLogic } from "@src/utils/backtestLogic";
+import { backtestLogic, ChartCandleType } from "@src/utils/backtestLogic";
 import { configActions } from "@src/redux/configReducer";
 import { systemActions } from "@src/redux/systemReducer";
 import { chartDCAActions } from "@src/redux/chartDCAReducer";
@@ -60,9 +59,9 @@ const App = () => {
         if (isError) {
             toast.error("Can't fetch data.");
         }
-        dispatch(systemActions.updateLoading(!isFetchingData));
+        // dispatch(systemActions.updateLoading(!isFetchingData));
         if (isFetchingData) {
-            dispatch(systemActions.showNeedHelp({ type: "customize" }));
+            // dispatch(systemActions.showNeedHelp({ type: "customize" }));
         }
     }, [isError, isLoading]);
 
@@ -82,8 +81,9 @@ const App = () => {
                 } else if (dcaStore.timeFrame === "1d") {
                     dcaData = getDayData(rawData);
                 }
-                const chartData = simulateDCA(dcaStore, dcaData);
-                dispatch(chartDCAActions.resetState()); // Reset before run a new backtest
+                const chartData = simulateDCA(dcaStore, dcaData) as ChartCandleType;
+
+                dispatch(chartDCAActions.resetState("")); // Reset before run a new backtest
                 dispatch(chartDCAActions.updateData({ data: chartData }));
 
                 dispatch(dcaActions.updateIsBacktestRunning(true));
@@ -96,9 +96,9 @@ const App = () => {
                 let executedOrders = Object.values(chartData)
                     .filter((order) => order.executedOrder !== undefined)
                     .map((order) => order.executedOrder!);
-                const analyseData = processDataForAnalyse(executedOrders, config);
+                const analyseData = processConfigDataForAnalyse(executedOrders, config);
 
-                dispatch(chartConfigActions.resetState()); // Reset before run a new backtest
+                dispatch(chartConfigActions.resetState("")); // Reset before run a new backtest
                 dispatch(chartConfigActions.updateData({ data: chartData, analyse: analyseData }));
 
                 dispatch(configActions.updateIsBacktestRunning(true));
@@ -128,12 +128,15 @@ const App = () => {
         switch (tabName) {
             case "dca":
                 dispatch(systemActions.updateView("dca"));
+                dispatch(chartConfigActions.resetState(""));
                 break;
             case "recommend":
                 dispatch(systemActions.updateView("recommend"));
+                dispatch(chartDCAActions.resetState(""));
                 break;
             default:
                 dispatch(systemActions.updateView("customize"));
+                dispatch(chartDCAActions.resetState(""));
         }
     };
     return (

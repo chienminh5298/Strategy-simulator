@@ -18,7 +18,7 @@ export type DCAConfig = {
 const initialState: DCAConfig = {
     token: "",
     year: "",
-    value: 100,
+    value: 10,
     totalOrder: 20,
     profitPercent: 5,
     isRSI: false,

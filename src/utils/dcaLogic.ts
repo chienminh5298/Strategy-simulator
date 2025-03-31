@@ -183,14 +183,21 @@ export const simulateDCA = (rcConfig: DCAConfig, dataHourly: { [date: string]: c
         const openOrders = Object.values(openOrder);
         const openOrderCount = openOrders.length;
         const avgEntryPrice = openOrderCount > 0 ? openOrders.reduce((sum, o) => sum + o.entryPrice, 0) / openOrderCount : 0;
-        // Tính toán fitness
-        const weightHold = 10;
+
+        // Ưu tiên ít lệnh hold nhất
+        const weightHold = 1000; // ⚠ Trọng số lớn
+        const weightProfit = 1;
         const weightAvgPrice = 0.1;
 
-        const fitness = sum - weightHold * openOrderCount - weightAvgPrice * avgEntryPrice;
+        // Fitness càng cao càng tốt
+        const fitness =
+            -weightHold * openOrderCount + // ✅ Trừ mạnh nếu hold nhiều
+            weightProfit * sum - // ✅ Lợi nhuận vẫn có ảnh hưởng
+            weightAvgPrice * avgEntryPrice; // ✅ Giá trung bình ảnh hưởng nhẹ
 
         return fitness;
     }
+
     return response;
 };
 

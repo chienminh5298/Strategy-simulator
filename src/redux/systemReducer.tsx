@@ -6,7 +6,7 @@ type SystemType = {
     isLoading: boolean;
     stepCustomConfig: number;
     stepDCA: number;
-    currentView: "customize" | "dca";
+    currentView: "customize" | "dca" | "recommend";
 };
 const initialState: SystemType = {
     isShowNeedHelpCustomConfig: false,
@@ -14,7 +14,7 @@ const initialState: SystemType = {
     isLoading: false,
     stepCustomConfig: 0,
     stepDCA: 0,
-    currentView: "customize",
+    currentView: "dca",
 };
 
 const total_step_custom_config = 3;

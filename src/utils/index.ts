@@ -1,5 +1,6 @@
 import { OrderType } from "@src/utils/backtestLogic";
 import { configType } from "@src/component/config/customize";
+import { DCAConfig } from "@src/redux/dcaReducer";
 
 export function convertToUTCDateTime(isoString: string) {
     // Create a Date object from the ISO string
@@ -64,6 +65,7 @@ export type StrategyBreakDownType = {
     targetHit: number[];
 };
 
+// This function will convert data to week data
 function processValueOverTimeData(orders: Required<OrderType>[]) {
     let weeklyProfit: ValueOverTimeChartType[] = [];
     let currentProfit = 0;
@@ -92,6 +94,8 @@ function processValueOverTimeData(orders: Required<OrderType>[]) {
 
     return weeklyProfit;
 }
+
+const processValueOverTimeDCAData = () =>{}
 
 function processProfitByMonthlyData(orders: Required<OrderType>[]) {
     let initialData = {
@@ -176,7 +180,7 @@ function processProfitByMonthlyData(orders: Required<OrderType>[]) {
     return Object.values(initialData);
 }
 
-export const processDataForAnalyse = (orders: Required<OrderType>[], config: configType) => {
+export const processConfigDataForAnalyse = (orders: Required<OrderType>[], config: configType) => {
     processValueOverTimeData(orders);
     const proftOrders = orders.filter((order) => order.profit > 0);
     const lossOrders = orders.filter((order) => order.profit < 0);
