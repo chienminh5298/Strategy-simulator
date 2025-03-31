@@ -14,6 +14,7 @@ export type DCAConfig = {
     timeFrame: "1h" | "4h" | "1d";
     isConfigCorrect: boolean;
     isBacktestRunning: boolean;
+    last3Config: DCAConfig[];
 };
 const initialState: DCAConfig = {
     token: "",
@@ -29,6 +30,7 @@ const initialState: DCAConfig = {
     timeFrame: "1h",
     isConfigCorrect: false,
     isBacktestRunning: false,
+    last3Config: [],
 };
 
 const dcaSlice = createSlice({
@@ -48,6 +50,13 @@ const dcaSlice = createSlice({
                 isConfigCorrect,
                 isBacktestRunning,
             };
+        },
+        updateRecordHistory(state, payload) {
+            const config = payload.payload;
+            if (state.last3Config.length === 4) {
+                state.last3Config.shift();
+            }
+            state.last3Config = [config, ...state.last3Config];
         },
     },
 });

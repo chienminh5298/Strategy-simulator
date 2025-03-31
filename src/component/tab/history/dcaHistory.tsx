@@ -60,7 +60,7 @@ const DcaHistory = () => {
                     <div className={styles.totalPL}>
                         {isShowNeedHelpDCA && stepDCA === 4 && (
                             <NeedHelp position="middle-left">
-                                <div className={`${helpStyles.helpConfig} ${styles.realizedTotal}`}>Realized P&L = Realized profit − (Number of open orders × Budget per order − Current value of open orders)</div>
+                                <div className={`${helpStyles.helpConfig} ${styles.realizedTotal}`}>Realized P&L = Realized profit + (Current value of open orders - Number of open orders × Budget per order)</div>
                             </NeedHelp>
                         )}
                         <div className={styles.totalContent}>

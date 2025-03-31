@@ -14,7 +14,7 @@ const initialState: SystemType = {
     isLoading: false,
     stepCustomConfig: 0,
     stepDCA: 0,
-    currentView: "dca",
+    currentView: "customize",
 };
 
 const total_step_custom_config = 3;

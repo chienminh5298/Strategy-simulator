@@ -59,9 +59,9 @@ const App = () => {
         if (isError) {
             toast.error("Can't fetch data.");
         }
-        // dispatch(systemActions.updateLoading(!isFetchingData));
+        dispatch(systemActions.updateLoading(!isFetchingData));
         if (isFetchingData) {
-            // dispatch(systemActions.showNeedHelp({ type: "customize" }));
+            dispatch(systemActions.showNeedHelp({ type: "customize" }));
         }
     }, [isError, isLoading]);
 
@@ -87,6 +87,7 @@ const App = () => {
                 dispatch(chartDCAActions.updateData({ data: chartData }));
 
                 dispatch(dcaActions.updateIsBacktestRunning(true));
+                dispatch(dcaActions.updateRecordHistory(dcaStore));
             } else {
                 toast.error("Please apply a config.");
             }

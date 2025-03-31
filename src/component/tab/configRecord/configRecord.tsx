@@ -1,4 +1,4 @@
-import styles from "@src/component/tab/configRecord/index.module.scss";
+import styles from "@src/component/tab/configRecord/configRecord.module.scss";
 import { RootState } from "@src/redux/store";
 import { useSelector } from "react-redux";
 import { toUSD } from "@src/utils";

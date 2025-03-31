@@ -3,7 +3,8 @@ import HistoryTab from "@src/component/tab/history/history";
 import DcaHistoryTab from "@src/component/tab/history/dcaHistory";
 import AnalyseConfigTab from "@src/component/tab/analyse/analyse";
 import AnalyseDCAConfigTab from "@src/component/tab/analyse/analyseDCA";
-import ConfigsRecord from "@src/component/tab/configRecord";
+import ConfigsRecord from "@src/component/tab/configRecord/configRecord";
+import DcaRecord from "@src/component/tab/configRecord/dcaRecord";
 import React, { useEffect, useState } from "react";
 import { RootState } from "@src/redux/store";
 import { useSelector } from "react-redux";
@@ -47,7 +48,7 @@ const Tab = () => {
                     } else if (tabName === "analyse") {
                         setTab(<AnalyseDCAConfigTab />);
                     } else {
-                        setTab(<ConfigsRecord />);
+                        setTab(<DcaRecord />);
                     }
                 }
                 setDefaultChecked(tabName);

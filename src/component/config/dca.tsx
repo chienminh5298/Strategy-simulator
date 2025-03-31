@@ -36,7 +36,7 @@ const Dca = () => {
 
     useEffect(() => {
         if (firstRun) {
-            // dispatch(systemActions.showNeedHelp({ type: "dca" }));
+            dispatch(systemActions.showNeedHelp({ type: "dca" }));
             firstRun = false;
         }
     }, []);
