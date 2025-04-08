@@ -59,9 +59,9 @@ const App = () => {
         if (isError) {
             toast.error("Can't fetch data.");
         }
-        // dispatch(systemActions.updateLoading(!isFetchingData));
+        dispatch(systemActions.updateLoading(!isFetchingData));
         if (isFetchingData) {
-            // dispatch(systemActions.showNeedHelp({ type: "customize" }));
+            dispatch(systemActions.showNeedHelp({ type: "customize" }));
         }
     }, [isError, isLoading]);
 
@@ -194,7 +194,7 @@ const App = () => {
                                 </div>
                                 <div className={helpStyles.content}>
                                     <span>Welcome to the Strategy Simulator! 🚀 Test, optimize, and refine your trading strategies with ease.</span>
-                                    <span>This system is designed for scalping trades, collecting real-time data from Binance.com and using 5-minute candlestick charts for backtesting. However, to save your time, the chart displays 15-minute candlesticks instead. The system achieves an accuracy rate of up to 90%. Processing a full year of data takes approximately 3 minutes and 30 seconds, so please be patient while the backtest completes.</span>
+                                    <span>This system is designed for scalping trades, collecting real-time data from Binance.com and using 5-minute candlestick charts for backtesting. However, to save your time, the chart displays 2-hours candlesticks instead. The system achieves an accuracy rate of up to 90%. Processing a full year of data takes approximately 3 minutes and 30 seconds, so please be patient while the backtest completes.</span>
                                     <span>
                                         If you find this tool helpful, please consider giving it a ⭐ on GitHub:{" "}
                                         <a target="_blank" href="https://github.com/chienminh5298/strategy-simulator">

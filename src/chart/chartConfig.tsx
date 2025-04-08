@@ -59,8 +59,9 @@ const Chart = () => {
         const lineSeries = chart.addLineSeries();
 
         let intervalID: any;
-        if (Object.keys(data).length !== 0) {
-            const ddd = Object.keys(data).map((key) => {
+        const dataKey = Object.keys(data);
+        if (dataKey.length !== 0) {
+            const ddd = dataKey.map((key) => {
                 const temp = data[key];
                 return {
                     time: Math.floor(new Date(key).getTime() / 1000),
@@ -102,14 +103,14 @@ const Chart = () => {
                 let borderColor = "#e4ff00";
                 let shape = "";
 
-                if (dateData.openOrderSide) {
-                    text = dateData.openOrderSide.toUpperCase();
-                }
-                if (text === "SHORT") {
-                    shape = "arrowDown";
-                } else if (text === "LONG") {
-                    shape = "arrowUp";
-                }
+                // if (dateData.openOrderSide) {
+                //     text = dateData.openOrderSide.toUpperCase();
+                // }
+                // if (text === "SHORT") {
+                //     shape = "arrowDown";
+                // } else if (text === "LONG") {
+                //     shape = "arrowUp";
+                // }
 
                 candleSeries.update({
                     time: dateData.time,
@@ -117,7 +118,7 @@ const Chart = () => {
                     high: dateData.high,
                     low: dateData.low,
                     close: dateData.close,
-                    ...(text !== "" ? { borderColor, borderWidth: 20 } : {}),
+                    // ...(text !== "" ? { borderColor, borderWidth: 20 } : {}),
                 });
 
                 // Volume series update with transparency
@@ -133,7 +134,7 @@ const Chart = () => {
                         position: text === "SHORT" ? "aboveBar" : "belowBar",
                         color: text === "SHORT" ? "#ef476f" : "#06d6a0",
                         shape,
-                        text,
+                        // text,
                         size: 2,
                     });
                     candleSeries.setMarkers(markers);
