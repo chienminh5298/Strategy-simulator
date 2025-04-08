@@ -11,7 +11,7 @@ import { mutationUpdateData } from "@src/http";
 import { dcaLogic } from "@src/utils/dcaLogic";
 import NeedHelp from "@src/component/needHelp";
 import { dataActions } from "@src/redux/dataReducer";
-import { convertToUTCDateTime, toUSD } from "@src/utils";
+import { convertToUTCDateTime, getDayData, getHourlyData, toUSD } from "@src/utils";
 import { systemActions } from "@src/redux/systemReducer";
 import styles from "@src/component/config/dca.module.scss";
 import { chartDCAActions } from "@src/redux/chartDCAReducer";
@@ -143,7 +143,22 @@ const Dca = () => {
             try {
                 const result = await new Promise<DCAConfig>((resolve) => {
                     setTimeout(() => {
-                        const newConfig = dcaLogic(DCAConfig, tokenData[DCAConfig.token][DCAConfig.year]);
+                        const rawData = tokenData[DCAConfig.token][DCAConfig.year];
+                        let data = rawData;
+                        switch (DCAConfig.timeFrame) {
+                            case "1h":
+                                data = getHourlyData(rawData);
+                                break;
+                            case "4h":
+                                data = getHourlyData(rawData);
+                                break;
+                            case "1d":
+                                data = getDayData(rawData);
+                                break;
+                            default:
+                                break;
+                        }
+                        const newConfig = dcaLogic(DCAConfig, data);
                         resolve(newConfig);
                     }, 10); // small timeout to force re-render
                 });
@@ -326,7 +341,7 @@ const Dca = () => {
                         </div>
                     </div>
 
-                    <div className={`${styles.row} ${styles.keepOrderOverNight}`}>
+                    <div className={`${styles.row} ${styles.closeOrderBeforeNewCandle}`}>
                         <header>Combine with RSI</header>
                         <div className={styles.content}>
                             <section title=".squaredOne">

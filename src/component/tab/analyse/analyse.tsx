@@ -67,8 +67,12 @@ const AnalyseTab = () => {
                             <div className={styles.value}>{config.year}</div>
                         </div>
                         <div className={styles.row}>
-                            <div className={styles.title}>Keep order overnight</div>
-                            <div className={`${styles.value} ${config.setting.keepOrderOverNight ? styles.buy : styles.sell}`}>{config.setting.keepOrderOverNight ? "YES" : "NO"}</div>
+                            <div className={styles.title}>Close position before new candle opens?</div>
+                            <div className={`${styles.value} ${config.setting.closeOrderBeforeNewCandle ? styles.buy : styles.sell}`}>{config.setting.closeOrderBeforeNewCandle ? "YES" : "NO"}</div>
+                        </div>
+                        <div className={styles.row}>
+                            <div className={styles.title}>Time frame</div>
+                            <div className={`${styles.value}`}>{config.setting.timeFrame}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Trigger strategy</div>
@@ -105,6 +109,10 @@ const AnalyseTab = () => {
                         <div className={styles.row}>
                             <div className={styles.title}>Total PnL</div>
                             <div className={`${styles.value} ${overView.totalPnL > 0 ? styles.buy : styles.sell}`}>{toUSD(overView.totalPnL)}</div>
+                        </div>
+                        <div className={styles.row}>
+                            <div className={`${styles.title} ${styles.sell}`}>Broker (binance.com) taker fee 0.05%</div>
+                            <div className={`${styles.value} ${styles.sell}`}>{toUSD(overView.fee, false)}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Highest profit</div>

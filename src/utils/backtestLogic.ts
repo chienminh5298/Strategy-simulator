@@ -26,49 +26,37 @@ export type ChartCandleType = {
     };
 };
 
-export const getOpenCandle = (candle: candleType) => {
-    const temp = new Date(candle.Date);
-    const year = temp.getFullYear();
-    const month = String(temp.getMonth() + 1).padStart(2, "0"); // Two-digit month
-    const day = String(temp.getDate()).padStart(2, "0"); // Two-digit day
-    return `${year}-${month}-${day}T00:00:00.000Z`;
-};
-
-export const getCloseCandle = (candle: candleType) => {
-    const temp = new Date(candle.Date);
-    const year = temp.getFullYear();
-    const month = String(temp.getMonth() + 1).padStart(2, "0"); // Two-digit month
-    const day = String(temp.getDate()).padStart(2, "0"); // Two-digit day
-
-    return `${year}-${month}-${day}T23:55:00.000Z`;
-};
-
 type GetNewOrderSideType = {
     config: configType;
     isTriggerOrder: boolean;
-    openCandle: candleType;
-    closeCandle: candleType;
+    prevCandle: candleType;
 };
 
-const getNewOrderSide = ({ config, isTriggerOrder, openCandle, closeCandle }: GetNewOrderSideType) => {
-    const prevDayCandleColor = getDayColor(openCandle, closeCandle);
+const getNewOrderSide = ({ config, isTriggerOrder, prevCandle }: GetNewOrderSideType) => {
+    const prevCandleColor = getDayColor(prevCandle);
     if (!isTriggerOrder) {
-        if (config.strategy.direction === "same") return prevDayCandleColor === "green" ? "long" : "short";
-        else return prevDayCandleColor === "green" ? "short" : "long";
+        if (config.strategy.direction === "same") return prevCandleColor === "green" ? "long" : "short";
+        else return prevCandleColor === "green" ? "short" : "long";
     } else {
-        if ((config.strategy.direction === "same" && config.triggerStrategy.direction === "same") || (config.strategy.direction === "opposite" && config.triggerStrategy.direction === "opposite")) return prevDayCandleColor === "green" ? "long" : "short";
-        else return prevDayCandleColor === "green" ? "short" : "long";
+        if ((config.strategy.direction === "same" && config.triggerStrategy.direction === "same") || (config.strategy.direction === "opposite" && config.triggerStrategy.direction === "opposite")) return prevCandleColor === "green" ? "long" : "short";
+        else return prevCandleColor === "green" ? "short" : "long";
     }
 };
 
-export const getDayColor = (openCandle: candleType, closeCandle: candleType) => {
-    if (openCandle.Open > closeCandle.Close) return "red";
+export const getDayColor = (prevCandle: candleType) => {
+    if (prevCandle.Open > prevCandle.Close) return "red";
     else return "green";
 };
 
-export const checkIsMidNight = (UTCstring: string) => {
+export const checkIsNewCandle = (UTCstring: string, timeFrame: "1h" | "4h" | "1d") => {
     const date = new Date(UTCstring);
-    return date.getUTCHours() === 0 && date.getUTCMinutes() === 0 && date.getUTCSeconds() === 0;
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
+
+    if (timeFrame === "1h" && minutes === 0) return true;
+    if (timeFrame === "4h" && hours % 4 === 0 && minutes === 0) return true;
+    if (timeFrame === "1d" && hours === 0 && minutes === 0) return true;
+    return false;
 };
 
 export const getMarkPRice = (percent: number, side: "long" | "short", entryPrice: number) => {
@@ -93,10 +81,51 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
     const dataValues = Object.values(data);
     let openOrder: { [orderId: number]: OrderType } = {};
     let response: ChartCandleType = {};
-    const processCreateNewMidNightOrder = (data: { [date: string]: candleType }, config: configType, candle: candleType, i: number) => {
-        const prevDayOpenCandle = data[getOpenCandle(candle)];
-        const prevDayCloseCandle = data[getCloseCandle(candle)];
-        const side = getNewOrderSide({ config, isTriggerOrder: false, openCandle: prevDayOpenCandle, closeCandle: prevDayCloseCandle });
+
+    const getPrevCandle = (config: configType, candle: candleType): candleType => {
+        const timeFrameToMinutes = (timeFrame: string): number => {
+            const unit = timeFrame.slice(-1);
+            const value = parseInt(timeFrame.slice(0, -1));
+            if (unit === "m") return value;
+            if (unit === "h") return value * 60;
+            if (unit === "d") return value * 60 * 24;
+            return 5; // fallback to 5 minutes
+        };
+
+        const getPreviousTimeFrameRange = (dateStr: string, minutes: number): string[] => {
+            const endDate = new Date(dateStr);
+            endDate.setMinutes(endDate.getMinutes() - 5); // exclude current candle
+
+            const startDate = new Date(endDate);
+            startDate.setMinutes(startDate.getMinutes() - minutes + 5);
+
+            const timestamps: string[] = [];
+            for (let d = new Date(startDate); d <= endDate; d.setMinutes(d.getMinutes() + 5)) {
+                const iso = d.toISOString().slice(0, 19) + ".000Z";
+                timestamps.push(iso);
+            }
+
+            return timestamps;
+        };
+
+        const frameMinutes = timeFrameToMinutes(config.setting.timeFrame);
+        const rangeTimestamps = getPreviousTimeFrameRange(candle.Date, frameMinutes);
+        const candles = rangeTimestamps.map((ts) => data[ts]).filter(Boolean);
+
+        return {
+            Date: rangeTimestamps[0],
+            Open: candles[0].Open,
+            High: Math.max(...candles.map((c) => c.High)),
+            Low: Math.min(...candles.map((c) => c.Low)),
+            Close: candles[candles.length - 1].Close,
+            Volume: candles.reduce((sum, c) => sum + c.Volume, 0),
+        };
+    };
+
+    const processCreateNewCandleOrder = (config: configType, candle: candleType) => {
+        const prevCandle = getPrevCandle(config, candle);
+        console.log(prevCandle);
+        const side = getNewOrderSide({ config, isTriggerOrder: false, prevCandle });
         createNewOrder({ candle, entryPrice: candle.Open, isTrigger: false, side, config });
     };
 
@@ -190,11 +219,11 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
         checkHitStoploss(candle, config);
         checkHitTarget(candle, config);
 
-        if (checkIsMidNight(candle.Date)) {
+        if (checkIsNewCandle(candle.Date, config.setting.timeFrame)) {
             // Check if exsist open order
             if (Object.keys(openOrder).length > 0) {
-                // Check setting is order not keep over night
-                if (!config.setting.keepOrderOverNight) {
+                // Check setting is order close before new candle
+                if (config.setting.closeOrderBeforeNewCandle) {
                     // Close all order
                     for (const orderId in openOrder) {
                         const order = openOrder[orderId];
@@ -203,7 +232,7 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
                     }
 
                     // Create new order
-                    processCreateNewMidNightOrder(data, config, candle, i);
+                    processCreateNewCandleOrder(config, candle);
 
                     // Check hit stoploss for new oder just opned (In case hit stoploss at first candle of the day)
                     checkHitStoploss(candle, config);
@@ -213,7 +242,7 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
                 }
             } else {
                 // Create new order
-                processCreateNewMidNightOrder(data, config, candle, i);
+                processCreateNewCandleOrder(config, candle);
 
                 // Check hit stoploss for new oder just opned (In case hit stoploss at first candle of the day)
                 checkHitStoploss(candle, config);

@@ -1,7 +1,7 @@
+import { checkIsNewCandle, getDayColor, getMarkPRice, getProfit, OrderType, randomId } from "@src/utils/backtestLogic";
+import { configType, StoplossType } from "@src/component/config/customize";
 import { RecommendConfigType } from "@src/redux/configReducer";
-import { candleType } from "../redux/dataReducer";
-import { checkIsMidNight, getCloseCandle, getDayColor, getMarkPRice, getOpenCandle, getProfit, OrderType, randomId } from "./backtestLogic";
-import { configType, StoplossType } from "../component/config/customize";
+import { candleType } from "@src/redux/dataReducer";
 
 let stoplossOptions = [0]; // Initialize with a default value
 let entryLossPercents = [0]; // Initialize with a default value
@@ -21,7 +21,7 @@ export const recommendLogic = (rcConfig: RecommendConfigType, data: { [date: str
             fitness: simulate({ data, rcConfig: config }),
         };
     });
-    
+
     for (let gen = 0; gen < GENERATIONS; gen++) {
         population.sort((a, b) => b.fitness - a.fitness);
         const parents = population.slice(0, 2); // Select the top 2 individuals as parents
@@ -45,7 +45,7 @@ export const recommendLogic = (rcConfig: RecommendConfigType, data: { [date: str
 function mutateConfig(config: configType): configType {
     const mutated = JSON.parse(JSON.stringify(config));
 
-    if (Math.random() < 0.3) mutated.setting.keepOrderOverNight = !mutated.setting.keepOrderOverNight;
+    if (Math.random() < 0.3) mutated.setting.closeOrderBeforeNewCandle = !mutated.setting.closeOrderBeforeNewCandle;
     if (Math.random() < 0.3) mutated.setting.isTrigger = !mutated.setting.isTrigger;
     if (Math.random() < 0.3) mutated.strategy.stoplosses = randomTargets(config.strategy.stoplosses.length);
     if (Math.random() < 0.3) mutated.triggerStrategy.stoplosses = randomTargets(config.triggerStrategy.stoplosses.length);
@@ -89,7 +89,7 @@ function crossoverTargets(aTargets: StoplossType[], bTargets: StoplossType[]): S
     if (last.percent !== last.target) {
         last.percent = last.target;
     }
-    
+
     childTargets[0] = { target: 0, percent: randomPick(entryLossPercents) };
     return childTargets;
 }
@@ -100,7 +100,8 @@ function crossoverConfig(a: configType, b: configType): configType {
         year: a.year,
         value: a.value,
         setting: {
-            keepOrderOverNight: Math.random() < 0.5 ? a.setting.keepOrderOverNight : b.setting.keepOrderOverNight,
+            timeFrame: a.setting.timeFrame,
+            closeOrderBeforeNewCandle: Math.random() < 0.5 ? a.setting.closeOrderBeforeNewCandle : b.setting.closeOrderBeforeNewCandle,
             isTrigger: Math.random() < 0.5 ? a.setting.isTrigger : b.setting.isTrigger,
         },
         strategy: {
@@ -214,7 +215,8 @@ function randomConfig(rcConfig: RecommendConfigType): configType {
         year: rcConfig.year,
         value: rcConfig.value,
         setting: {
-            keepOrderOverNight: randomPick(keepOverNightOptions),
+            timeFrame: rcConfig.setting.timeFrame,
+            closeOrderBeforeNewCandle: randomPick(keepOverNightOptions),
             isTrigger: randomPick(isTriggerOptions),
         },
         strategy: {
@@ -234,10 +236,49 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
     let openOrder: { [orderId: number]: OrderType } = {};
     let sum = 0;
 
-    const processCreateNewMidNightOrder = (data: { [date: string]: candleType }, config: configType, candle: candleType, i: number) => {
-        const prevDayOpenCandle = data[getOpenCandle(candle)];
-        const prevDayCloseCandle = data[getCloseCandle(candle)];
-        const side = getNewOrderSide(getDayColor(prevDayOpenCandle, prevDayCloseCandle), rcConfig.strategy.direction);
+    const getPrevCandle = (config: configType, candle: candleType): candleType => {
+        const timeFrameToMinutes = (timeFrame: string): number => {
+            const unit = timeFrame.slice(-1);
+            const value = parseInt(timeFrame.slice(0, -1));
+            if (unit === "m") return value;
+            if (unit === "h") return value * 60;
+            if (unit === "d") return value * 60 * 24;
+            return 5; // fallback to 5 minutes
+        };
+
+        const getPreviousTimeFrameRange = (dateStr: string, minutes: number): string[] => {
+            const endDate = new Date(dateStr);
+            endDate.setMinutes(endDate.getMinutes() - 5); // exclude current candle
+
+            const startDate = new Date(endDate);
+            startDate.setMinutes(startDate.getMinutes() - minutes + 5);
+
+            const timestamps: string[] = [];
+            for (let d = new Date(startDate); d <= endDate; d.setMinutes(d.getMinutes() + 5)) {
+                const iso = d.toISOString().slice(0, 19) + ".000Z";
+                timestamps.push(iso);
+            }
+
+            return timestamps;
+        };
+
+        const frameMinutes = timeFrameToMinutes(config.setting.timeFrame);
+        const rangeTimestamps = getPreviousTimeFrameRange(candle.Date, frameMinutes);
+        const candles = rangeTimestamps.map((ts) => data[ts]).filter(Boolean);
+
+        return {
+            Date: rangeTimestamps[0],
+            Open: candles[0].Open,
+            High: Math.max(...candles.map((c) => c.High)),
+            Low: Math.min(...candles.map((c) => c.Low)),
+            Close: candles[candles.length - 1].Close,
+            Volume: candles.reduce((sum, c) => sum + c.Volume, 0),
+        };
+    };
+
+    const processCreateNewMidNightOrder = (config: configType, candle: candleType) => {
+        const prevCandle = getPrevCandle(config, candle);
+        const side = getNewOrderSide(getDayColor(prevCandle), rcConfig.strategy.direction);
         createNewOrder({ candle, entryPrice: candle.Open, isTrigger: false, side, config });
     };
 
@@ -326,11 +367,11 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
         checkHitStoploss(candle, rcConfig);
         checkHitTarget(candle, rcConfig);
 
-        if (checkIsMidNight(candle.Date)) {
+        if (checkIsNewCandle(candle.Date, rcConfig.setting.timeFrame)) {
             // Check if exsist open order
             if (Object.keys(openOrder).length > 0) {
                 // Check setting is order not keep over night
-                if (!rcConfig.setting.keepOrderOverNight) {
+                if (!rcConfig.setting.closeOrderBeforeNewCandle) {
                     // Close all order
                     for (const orderId in openOrder) {
                         const order = openOrder[orderId];
@@ -339,7 +380,7 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
                     }
 
                     // Create new order
-                    processCreateNewMidNightOrder(data, rcConfig, candle, i);
+                    processCreateNewMidNightOrder(rcConfig, candle);
 
                     // Check hit stoploss for new oder just opned (In case hit stoploss at first candle of the day)
                     checkHitStoploss(candle, rcConfig);
@@ -349,7 +390,7 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
                 }
             } else {
                 // Create new order
-                processCreateNewMidNightOrder(data, rcConfig, candle, i);
+                processCreateNewMidNightOrder(rcConfig, candle);
 
                 // Check hit stoploss for new oder just opned (In case hit stoploss at first candle of the day)
                 checkHitStoploss(candle, rcConfig);
@@ -359,48 +400,4 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
     }
 
     return sum;
-};
-
-const getDate = (date: string) => {
-    return date.split("T")[0];
-};
-
-// This function will convert candle 5m to candle 1D
-export const getDayData = (data: { [date: string]: candleType }) => {
-    const dataValues = Object.values(data);
-    let dayData: {
-        [date: string]: {
-            Open: number;
-            Date: string;
-            High: number;
-            Low: number;
-            Close: number;
-            Volume: number;
-        };
-    } = {};
-    for (let i = 481; i < dataValues.length; i++) {
-        const candle = dataValues[i];
-        const date = getDate(candle.Date);
-        if (checkIsMidNight(candle.Date)) {
-            dayData[date] = {
-                Open: candle.Open,
-                Date: date,
-                Low: candle.Low,
-                High: candle.High,
-                Close: data[`${date}T23:55:00.000Z`].Close,
-                Volume: candle.Volume,
-            };
-        } else {
-            if (dayData[date]) {
-                if (candle.Close < dayData[date].Low) {
-                    dayData[date].Low = candle.Low;
-                }
-                if (candle.High > dayData[date].High) {
-                    dayData[date].High = candle.High;
-                }
-            }
-        }
-    }
-
-    return dayData;
 };

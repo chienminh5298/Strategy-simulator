@@ -13,7 +13,7 @@ export const fetchTokenDataByYear = async (token: string, year: number | string)
     return await axios.get(`${GOOGLE_APP_SCRIPT}action=readYear&token=${token}&year=${year}`);
 };
 
-export const mutationUpdateData = async (token: string, lastDate: string) => {
+export const mutationUpdateData = async (token: string, lastDate: string | undefined) => {
     try {
         const res = await axios.post(
             AWS_LAMBDA,

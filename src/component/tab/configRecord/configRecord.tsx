@@ -56,7 +56,7 @@ const ConfigsRecord = () => {
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Keep order overnight</div>
-                            <div className={`${styles.value} ${config.setting.keepOrderOverNight ? styles.buy : styles.sell}`}>{config.setting.keepOrderOverNight ? "YES" : "NO"}</div>
+                            <div className={`${styles.value} ${config.setting.closeOrderBeforeNewCandle ? styles.buy : styles.sell}`}>{config.setting.closeOrderBeforeNewCandle ? "YES" : "NO"}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Trigger strategy</div>
@@ -139,7 +139,7 @@ const ConfigsRecord = () => {
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Keep order overnight</div>
-                            <div className={`${styles.value} ${bestConfig?.config.setting.keepOrderOverNight ? styles.buy : styles.sell}`}>{bestConfig?.config.setting.keepOrderOverNight ? "YES" : "NO"}</div>
+                            <div className={`${styles.value} ${bestConfig?.config.setting.closeOrderBeforeNewCandle ? styles.buy : styles.sell}`}>{bestConfig?.config.setting.closeOrderBeforeNewCandle ? "YES" : "NO"}</div>
                         </div>
                         <div className={styles.row}>
                             <div className={styles.title}>Trigger strategy</div>

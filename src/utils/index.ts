@@ -1,8 +1,9 @@
-import { OrderType } from "@src/utils/backtestLogic";
+import { checkIsNewCandle, OrderType } from "@src/utils/backtestLogic";
 import { configType } from "@src/component/config/customize";
-import { DCAConfig } from "@src/redux/dcaReducer";
+import { candleType } from "@src/redux/dataReducer";
 
-export function convertToUTCDateTime(isoString: string) {
+export function convertToUTCDateTime(isoString: string | undefined | JSX.Element) {
+    if (typeof isoString !== "string") return "";
     // Create a Date object from the ISO string
     const date = new Date(isoString);
 
@@ -24,6 +25,7 @@ export const toUSD = (value: number | string = 0, sign: boolean = true, maximumF
 
 export type OverViewType = {
     totalPnL: number;
+    fee: number;
     winRate: number;
     lossRate: number;
     totalTrade: number;
@@ -94,8 +96,6 @@ function processValueOverTimeData(orders: Required<OrderType>[]) {
 
     return weeklyProfit;
 }
-
-const processValueOverTimeDCAData = () =>{}
 
 function processProfitByMonthlyData(orders: Required<OrderType>[]) {
     let initialData = {
@@ -182,6 +182,9 @@ function processProfitByMonthlyData(orders: Required<OrderType>[]) {
 
 export const processConfigDataForAnalyse = (orders: Required<OrderType>[], config: configType) => {
     processValueOverTimeData(orders);
+    const BINANCE_TAKER_FEE = 0.0005; // 0.05%
+    const fee = orders.reduce((total, o) => total + o.qty * o.entryPrice, 0) * BINANCE_TAKER_FEE;
+
     const proftOrders = orders.filter((order) => order.profit > 0);
     const lossOrders = orders.filter((order) => order.profit < 0);
 
@@ -203,6 +206,7 @@ export const processConfigDataForAnalyse = (orders: Required<OrderType>[], confi
 
     let overView: OverViewType = {
         totalPnL: totalPnL,
+        fee: fee,
         highestLoss,
         highestProfit,
         winRate: (proftOrders.length * 100) / orders.length,
@@ -304,4 +308,139 @@ export const processConfigDataForAnalyse = (orders: Required<OrderType>[], confi
     };
 
     return { overView, ValueOverTimeChart, profitByMonthlyChart, strategyBreakDown, triggerStrategyBreakDown };
+};
+
+// This function will convert candle 5m to candle 1D
+export const getDayData = (data: { [date: string]: candleType }) => {
+    const dataValues = Object.values(data);
+    let dayData: {
+        [date: string]: {
+            Open: number;
+            Date: string;
+            High: number;
+            Low: number;
+            Close: number;
+            Volume: number;
+        };
+    } = {};
+    for (let i = 481; i < dataValues.length; i++) {
+        const candle = dataValues[i];
+        const date = candle.Date.split("T")[0];
+        if (checkIsNewCandle(candle.Date, "1d")) {
+            dayData[date] = {
+                Open: candle.Open,
+                Date: date,
+                Low: candle.Low,
+                High: candle.High,
+                Close: data[`${date}T23:55:00.000Z`].Close,
+                Volume: candle.Volume,
+            };
+        } else {
+            if (dayData[date]) {
+                if (candle.Close < dayData[date].Low) {
+                    dayData[date].Low = candle.Low;
+                }
+                if (candle.High > dayData[date].High) {
+                    dayData[date].High = candle.High;
+                }
+            }
+        }
+    }
+
+    return dayData;
+};
+
+export const getHourlyData = (data: { [date: string]: candleType }) => {
+    const dataValues = Object.values(data);
+
+    let hourlyData: {
+        [hourKey: string]: {
+            Open: number;
+            Date: string;
+            High: number;
+            Low: number;
+            Close: number;
+            Volume: number;
+        };
+    } = {};
+
+    for (let i = 481; i < dataValues.length; i++) {
+        const candle = dataValues[i];
+        const date = new Date(candle.Date);
+
+        const hourKey = date.toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
+        const minute = date.getUTCMinutes();
+
+        if (minute === 0) {
+            // Nến đầu giờ
+            hourlyData[hourKey] = {
+                Open: candle.Open,
+                Date: hourKey + ":00:00.000Z",
+                High: candle.High,
+                Low: candle.Low,
+                Close: candle.Close,
+                Volume: candle.Volume,
+            };
+        } else {
+            if (hourlyData[hourKey]) {
+                if (candle.Low < hourlyData[hourKey].Low) {
+                    hourlyData[hourKey].Low = candle.Low;
+                }
+                if (candle.High > hourlyData[hourKey].High) {
+                    hourlyData[hourKey].High = candle.High;
+                }
+                // Cập nhật close theo cây nến mới nhất
+                hourlyData[hourKey].Close = candle.Close;
+            }
+        }
+    }
+
+    return hourlyData;
+};
+
+export const get4hData = (data: { [date: string]: candleType }) => {
+    const dataValues = Object.values(data);
+
+    let data4H: {
+        [key: string]: {
+            Open: number;
+            Date: string;
+            High: number;
+            Low: number;
+            Close: number;
+            Volume: number;
+        };
+    } = {};
+
+    for (let i = 481; i < dataValues.length; i++) {
+        const candle = dataValues[i];
+        const date = new Date(candle.Date);
+
+        // Tính key theo từng khung 4 giờ
+        const utcYear = date.getUTCFullYear();
+        const utcMonth = date.getUTCMonth() + 1;
+        const utcDay = date.getUTCDate();
+        const utcHour = date.getUTCHours();
+        const groupHour = Math.floor(utcHour / 4) * 4; // Nhóm theo 0, 4, 8, 12, 16, 20
+
+        const key = `${utcYear}-${String(utcMonth).padStart(2, "0")}-${String(utcDay).padStart(2, "0")}T${String(groupHour).padStart(2, "0")}:00:00.000Z`;
+
+        if (!data4H[key]) {
+            data4H[key] = {
+                Open: candle.Open,
+                Date: key,
+                High: candle.High,
+                Low: candle.Low,
+                Close: candle.Close,
+                Volume: candle.Volume,
+            };
+        } else {
+            data4H[key].High = Math.max(data4H[key].High, candle.High);
+            data4H[key].Low = Math.min(data4H[key].Low, candle.Low);
+            data4H[key].Close = candle.Close;
+            data4H[key].Volume += candle.Volume;
+        }
+    }
+
+    return data4H;
 };

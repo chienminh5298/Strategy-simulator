@@ -7,6 +7,7 @@ const initialAnalyse = {
     ValueOverTimeChart: [],
     overView: {
         totalPnL: 0,
+        fee: 0,
         winRate: 0,
         lossRate: 0,
         totalTrade: 0,
@@ -70,7 +71,7 @@ const chartSlice = createSlice({
     reducers: {
         updateData(state, payload) {
             const { data, analyse } = payload.payload;
-            Object.assign(state, {...state,data,analyse});
+            Object.assign(state, { ...state, data, analyse });
         },
         resetState(state, payload) {
             state.data = {};

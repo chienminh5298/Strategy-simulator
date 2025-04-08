@@ -1,6 +1,7 @@
 import { DCAConfig } from "@src/redux/dcaReducer";
 import { candleType } from "@src/redux/dataReducer";
 import { ChartCandleType, OrderType, randomId } from "@src/utils/backtestLogic";
+import { getHourlyData } from ".";
 
 function randomPick<T>(arr: T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
@@ -15,13 +16,11 @@ export const dcaLogic = (rcConfig: DCAConfig, data: { [date: string]: candleType
     const POP_SIZE = 100;
     const GENERATIONS = 10;
 
-    const dataHourly = getHourlyData(data);
-
     let population: Individual[] = Array.from({ length: POP_SIZE }, () => {
         const config = randomConfig(rcConfig);
         return {
             config,
-            fitness: simulateDCA(rcConfig, dataHourly, true) as number,
+            fitness: simulateDCA(rcConfig, data, true) as number,
         };
     });
 
@@ -32,7 +31,7 @@ export const dcaLogic = (rcConfig: DCAConfig, data: { [date: string]: candleType
 
         while (newPopulation.length < POP_SIZE) {
             const childConfig = mutateConfig(crossoverConfig(parents[0].config, parents[1].config));
-            const fitness = simulateDCA(rcConfig, dataHourly, true) as number;
+            const fitness = simulateDCA(rcConfig, data, true) as number;
             newPopulation.push({ config: childConfig, fitness });
         }
 
@@ -92,16 +91,16 @@ function crossoverConfig(a: DCAConfig, b: DCAConfig): DCAConfig {
     };
 }
 
-export const simulateDCA = (rcConfig: DCAConfig, dataHourly: { [date: string]: candleType }, isRecommend = false) => {
+export const simulateDCA = (rcConfig: DCAConfig, data: { [date: string]: candleType }, isRecommend = false) => {
     const TOTAL_ORDER = rcConfig.totalOrder;
     const PROFIT_PERCENT = rcConfig.profitPercent;
     let openOrder: { [orderId: number]: OrderType } = {};
     let sum = 0;
     let response: ChartCandleType = {}; // This just for render candlestick chart
 
-    const closes = Object.values(dataHourly).map((c) => c.Close);
+    const closes = Object.values(data).map((c) => c.Close);
     const rsiValues = calculateRSI(closes, 14);
-    const dataValues = Object.values(dataHourly);
+    const dataValues = Object.values(data);
 
     for (let i = 0; i < dataValues.length; i++) {
         const hour = dataValues[i];
@@ -199,101 +198,6 @@ export const simulateDCA = (rcConfig: DCAConfig, dataHourly: { [date: string]: c
     }
 
     return response;
-};
-
-export const getHourlyData = (data: { [date: string]: candleType }) => {
-    const dataValues = Object.values(data);
-
-    let hourlyData: {
-        [hourKey: string]: {
-            Open: number;
-            Date: string;
-            High: number;
-            Low: number;
-            Close: number;
-            Volume: number;
-        };
-    } = {};
-
-    for (let i = 481; i < dataValues.length; i++) {
-        const candle = dataValues[i];
-        const date = new Date(candle.Date);
-
-        const hourKey = date.toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
-        const minute = date.getUTCMinutes();
-
-        if (minute === 0) {
-            // Nến đầu giờ
-            hourlyData[hourKey] = {
-                Open: candle.Open,
-                Date: hourKey + ":00:00.000Z",
-                High: candle.High,
-                Low: candle.Low,
-                Close: candle.Close,
-                Volume: candle.Volume,
-            };
-        } else {
-            if (hourlyData[hourKey]) {
-                if (candle.Low < hourlyData[hourKey].Low) {
-                    hourlyData[hourKey].Low = candle.Low;
-                }
-                if (candle.High > hourlyData[hourKey].High) {
-                    hourlyData[hourKey].High = candle.High;
-                }
-                // Cập nhật close theo cây nến mới nhất
-                hourlyData[hourKey].Close = candle.Close;
-            }
-        }
-    }
-
-    return hourlyData;
-};
-
-export const get4hData = (data: { [date: string]: candleType }) => {
-    const dataValues = Object.values(data);
-
-    let data4H: {
-        [key: string]: {
-            Open: number;
-            Date: string;
-            High: number;
-            Low: number;
-            Close: number;
-            Volume: number;
-        };
-    } = {};
-
-    for (let i = 481; i < dataValues.length; i++) {
-        const candle = dataValues[i];
-        const date = new Date(candle.Date);
-
-        // Tính key theo từng khung 4 giờ
-        const utcYear = date.getUTCFullYear();
-        const utcMonth = date.getUTCMonth() + 1;
-        const utcDay = date.getUTCDate();
-        const utcHour = date.getUTCHours();
-        const groupHour = Math.floor(utcHour / 4) * 4; // Nhóm theo 0, 4, 8, 12, 16, 20
-
-        const key = `${utcYear}-${String(utcMonth).padStart(2, "0")}-${String(utcDay).padStart(2, "0")}T${String(groupHour).padStart(2, "0")}:00:00.000Z`;
-
-        if (!data4H[key]) {
-            data4H[key] = {
-                Open: candle.Open,
-                Date: key,
-                High: candle.High,
-                Low: candle.Low,
-                Close: candle.Close,
-                Volume: candle.Volume,
-            };
-        } else {
-            data4H[key].High = Math.max(data4H[key].High, candle.High);
-            data4H[key].Low = Math.min(data4H[key].Low, candle.Low);
-            data4H[key].Close = candle.Close;
-            data4H[key].Volume += candle.Volume;
-        }
-    }
-
-    return data4H;
 };
 
 function calculateRSI(closes: number[], length = 14): number[] {

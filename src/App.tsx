@@ -15,9 +15,9 @@ import { RootState } from "@src/redux/store";
 import NeedHelp from "@src/component/needHelp";
 import ChartConfig from "@src/chart/chartConfig";
 import { dcaActions } from "@src/redux/dcaReducer";
-import { processConfigDataForAnalyse } from "@src/utils";
-import { getDayData } from "@src/utils/recommendLogic";
-import { backtestLogic, ChartCandleType } from "@src/utils/backtestLogic";
+import { get4hData, getDayData, getHourlyData, processConfigDataForAnalyse } from "@src/utils";
+
+import { simulateDCA } from "@src/utils/dcaLogic";
 import { configActions } from "@src/redux/configReducer";
 import { systemActions } from "@src/redux/systemReducer";
 import { chartDCAActions } from "@src/redux/chartDCAReducer";
@@ -26,7 +26,7 @@ import RecommendConfig from "@src/component/config/recommend";
 import { candleType, dataActions } from "@src/redux/dataReducer";
 import { chartConfigActions } from "@src/redux/chartConfigReducer";
 import helpStyles from "@src/component/needHelp/index.module.scss";
-import { get4hData, getHourlyData, simulateDCA } from "@src/utils/dcaLogic";
+import { backtestLogic, ChartCandleType } from "@src/utils/backtestLogic";
 
 const App = () => {
     const dispatch = useDispatch();
@@ -59,9 +59,9 @@ const App = () => {
         if (isError) {
             toast.error("Can't fetch data.");
         }
-        dispatch(systemActions.updateLoading(!isFetchingData));
+        // dispatch(systemActions.updateLoading(!isFetchingData));
         if (isFetchingData) {
-            dispatch(systemActions.showNeedHelp({ type: "customize" }));
+            // dispatch(systemActions.showNeedHelp({ type: "customize" }));
         }
     }, [isError, isLoading]);
 
@@ -74,14 +74,23 @@ const App = () => {
     // Handle run backtest
     const handleRun = () => {
         if (currentView === "dca") {
+            let data = rawData; // Data 5m
+            switch (config.setting.timeFrame) {
+                case "1h":
+                    data = getHourlyData(rawData);
+                    break;
+                case "4h":
+                    data = get4hData(rawData);
+                    break;
+                case "1d":
+                    data = getDayData(rawData);
+                    break;
+                default:
+                    break;
+            }
+
             if (dcaStore.isConfigCorrect) {
-                let dcaData = getHourlyData(rawData);
-                if (dcaStore.timeFrame === "4h") {
-                    dcaData = get4hData(rawData);
-                } else if (dcaStore.timeFrame === "1d") {
-                    dcaData = getDayData(rawData);
-                }
-                const chartData = simulateDCA(dcaStore, dcaData) as ChartCandleType;
+                const chartData = simulateDCA(dcaStore, data) as ChartCandleType;
 
                 dispatch(chartDCAActions.resetState("")); // Reset before run a new backtest
                 dispatch(chartDCAActions.updateData({ data: chartData }));

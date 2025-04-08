@@ -28,7 +28,8 @@ const initialState: {
         year: "",
         value: 500,
         setting: {
-            keepOrderOverNight: false,
+            timeFrame: "1d",
+            closeOrderBeforeNewCandle: true,
             isTrigger: true,
         },
         strategy: {
@@ -65,7 +66,8 @@ const initialState: {
         year: "",
         value: 500,
         setting: {
-            keepOrderOverNight: false,
+            timeFrame: "1d",
+            closeOrderBeforeNewCandle: true,
             isTrigger: false,
         },
         strategy: {

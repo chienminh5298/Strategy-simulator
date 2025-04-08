@@ -10,7 +10,7 @@ import { RootState } from "@src/redux/store";
 import { mutationUpdateData } from "@src/http";
 import NeedHelp from "@src/component/needHelp";
 import { convertToUTCDateTime } from "@src/utils";
-import { dataActions } from "@src/redux/dataReducer";
+import { candleType, dataActions } from "@src/redux/dataReducer";
 import CurrencyInput from "react-currency-input-field";
 import { configActions } from "@src/redux/configReducer";
 import { systemActions } from "@src/redux/systemReducer";
@@ -30,7 +30,8 @@ export type configType = {
     year: string;
     value: number;
     setting: {
-        keepOrderOverNight: boolean;
+        timeFrame: "1h" | "4h" | "1d";
+        closeOrderBeforeNewCandle: boolean;
         isTrigger: boolean;
     };
     strategy: {
@@ -210,7 +211,7 @@ const CustomizeConfig = () => {
             setConfig(newConfig); // This ensures UI re-render
             dispatch(configActions.updateIsConfigCorrect(true));
             dispatch(configActions.updateConfig(newConfig)); // Use the newConfig here
-            dispatch(chartConfigActions.resetState());
+            dispatch(chartConfigActions.resetState(""));
             dispatch(configActions.updateIsBacktestRunning(false));
             toast.success("Apply config successfully. You can run backtest now.");
         } else {
@@ -283,10 +284,10 @@ const CustomizeConfig = () => {
                         </div>
                         <div className={helpStyles.title}>
                             <FontAwesomeIcon icon={faQuestionCircle} className={helpStyles.icon} />
-                            <h3>What is "Keep over night"</h3>
+                            <h3>What is "Close position before new candle opens?"</h3>
                         </div>
                         <div className={helpStyles.content}>
-                            <span>This is a scalping trade system, so it will close the old order and open a new one every midnight. If 'Keep Overnight' is turned on, instead of closing the old order, the system will keep it open until it hits the stop loss or the last target.</span>
+                            <span>This is a scalping trade system, so it will close the old order and open a new one every new candle. If it is turned on, instead of keep the old position until it hits the stop loss or the last target, the system close it then re-open a new position for new candle.</span>
                         </div>
                         <div className={helpStyles.title}>
                             <FontAwesomeIcon icon={faQuestionCircle} className={helpStyles.icon} />
@@ -379,14 +380,33 @@ const CustomizeConfig = () => {
                         }}
                     />
                 </div>
+                <div className={styles.timeFrame}>
+                    <div className={styles.side}>
+                        <div className={styles.direction}>Time frame:</div>
+                        <div className={styles.option}>
+                            <label className={`${styles.option} ${styles.long}`}>
+                                <input type="radio" name="timeFrame" value="1h" defaultChecked={config.setting.timeFrame === "1h"} onChange={() => setConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, timeFrame: "1h" } }))} />
+                                <span>1H</span>
+                            </label>
+                            <label className={`${styles.option} ${styles.long}`}>
+                                <input type="radio" name="timeFrame" value="4h" defaultChecked={config.setting.timeFrame === "4h"} onChange={() => setConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, timeFrame: "4h" } }))} />
+                                <span>4H</span>
+                            </label>
+                            <label className={`${styles.option} ${styles.long}`}>
+                                <input type="radio" name="timeFrame" value="1d" defaultChecked={config.setting.timeFrame === "1d"} onChange={() => setConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, timeFrame: "1d" } }))} />
+                                <span>1D</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
                 <div className={styles.setting}>
-                    <div className={`${styles.row} ${styles.keepOrderOverNight}`}>
-                        <header>Keep order overnight</header>
+                    <div className={`${styles.row} ${styles.closeOrderBeforeNewCandle}`}>
+                        <header>Close position before new candle opens?</header>
                         <div className={styles.content}>
                             <section title=".squaredOne">
                                 <div className={styles.squaredOne}>
-                                    <input type="checkbox" value="None" id="keepOrderOverNight" name="keepOrderOverNight" onChange={() => setConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, keepOrderOverNight: !config.setting.keepOrderOverNight } }))} />
-                                    <label htmlFor="keepOrderOverNight"></label>
+                                    <input type="checkbox" value="None" id="closeOrderBeforeNewCandle" name="closeOrderBeforeNewCandle" onChange={() => setConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, closeOrderBeforeNewCandle: !config.setting.closeOrderBeforeNewCandle } }))} checked={config.setting.closeOrderBeforeNewCandle} />
+                                    <label htmlFor="closeOrderBeforeNewCandle"></label>
                                 </div>
                             </section>
                         </div>
@@ -537,7 +557,7 @@ export const checkDate = (date: Date) => {
     return date.getDate() + 1 === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
 };
 
-export const getLastDate = (data: { [token: string]: any[] }) => {
+export const getLastDate = (data: { [year: number | string]: { [date: string]: candleType } }) => {
     const thisYear = Object.keys(data).pop();
     if (thisYear) {
         const dataThisYear = Object.values(data[thisYear]);

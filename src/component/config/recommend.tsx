@@ -3,19 +3,19 @@ import { useMutation } from "@tanstack/react-query";
 import { Fragment, useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
-import { RootState } from "@src/redux/store";
-import { mutationUpdateData } from "@src/http";
-import { convertToUTCDateTime } from "@src/utils";
-import { dataActions } from "@src/redux/dataReducer";
+import { configActions, RecommendConfigType } from "@src/redux/configReducer";
+import { checkDate, getLastDate } from "@src/component/config/customize";
+import useFetchYearData from "@src/customHook/fetchTokenDataByYear";
+import { chartConfigActions } from "@src/redux/chartConfigReducer";
+import { errorMessage } from "@src/component/config/errorMessage";
+import styles from "@src/component/config/recommend.module.scss";
 import { systemActions } from "@src/redux/systemReducer";
 import { recommendLogic } from "@src/utils/recommendLogic";
-import { configActions, RecommendConfigType } from "@src/redux/configReducer";
-import styles from "@src/component/config/recommend.module.scss";
-import { errorMessage } from "@src/component/config/errorMessage";
-import useFetchYearData from "@src/customHook/fetchTokenDataByYear";
-import { checkDate, configType, getLastDate } from "@src/component/config/customize";
 import CurrencyInput from "react-currency-input-field";
-import { chartConfigActions } from "@src/redux/chartConfigReducer";
+import { dataActions } from "@src/redux/dataReducer";
+import { convertToUTCDateTime } from "@src/utils";
+import { mutationUpdateData } from "@src/http";
+import { RootState } from "@src/redux/store";
 
 const RecommendConfig = () => {
     const storeRecommendConfig = useSelector((state: RootState) => state.config.recommendConfig);
@@ -176,7 +176,7 @@ const RecommendConfig = () => {
         e.preventDefault();
         dispatch(configActions.updateIsConfigCorrect(true));
         dispatch(configActions.updateConfig(recommendConfig)); // Use the newConfig here
-        dispatch(chartConfigActions.resetState());
+        dispatch(chartConfigActions.resetState(""));
         dispatch(configActions.updateIsBacktestRunning(false));
         toast.success("Apply config successfully. You can run backtest now.");
     };
@@ -241,6 +241,25 @@ const RecommendConfig = () => {
                         }}
                     />
                 </div>
+                <div className={styles.timeFrame}>
+                    <div className={styles.side}>
+                        <div className={styles.direction}>Time frame:</div>
+                        <div className={styles.option}>
+                            <label className={`${styles.option} ${styles.long}`}>
+                                <input type="radio" name="timeFrame" value="1h" defaultChecked={recommendConfig.setting.timeFrame === "1h"} onChange={() => setRecommendConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, timeFrame: "1h" } }))} />
+                                <span>1H</span>
+                            </label>
+                            <label className={`${styles.option} ${styles.long}`}>
+                                <input type="radio" name="timeFrame" value="4h" defaultChecked={recommendConfig.setting.timeFrame === "4h"} onChange={() => setRecommendConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, timeFrame: "4h" } }))} />
+                                <span>4H</span>
+                            </label>
+                            <label className={`${styles.option} ${styles.long}`}>
+                                <input type="radio" name="timeFrame" value="1d" defaultChecked={recommendConfig.setting.timeFrame === "1d"} onChange={() => setRecommendConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, timeFrame: "1d" } }))} />
+                                <span>1D</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
                 <div className={styles.setting}>
                     <div className={styles.row}>
                         <header>Maximum loss percent</header>
@@ -271,13 +290,13 @@ const RecommendConfig = () => {
                 {recommendConfig.strategy.stoplosses.length > 0 && (
                     <div className={styles.recommendResult}>
                         <div className={styles.setting}>
-                            <div className={`${styles.row} ${styles.keepOrderOverNight}`}>
-                                <header>Keep order overnight</header>
+                            <div className={`${styles.row} ${styles.closeOrderBeforeNewCandle}`}>
+                                <header>Close position before new candle opens?</header>
                                 <div className={styles.content}>
                                     <section title=".squaredOne">
                                         <div className={styles.squaredOne}>
-                                            <input type="checkbox" value="None" id="keepOrderOverNight" name="keepOrderOverNight" disabled defaultChecked={recommendConfig?.setting.keepOrderOverNight} />
-                                            <label htmlFor="keepOrderOverNight"></label>
+                                            <input type="checkbox" value="None" id="closeOrderBeforeNewCandle" name="closeOrderBeforeNewCandle" disabled defaultChecked={recommendConfig?.setting.closeOrderBeforeNewCandle} />
+                                            <label htmlFor="closeOrderBeforeNewCandle"></label>
                                         </div>
                                     </section>
                                 </div>
