@@ -105,7 +105,7 @@ const App = () => {
                 const chartData = backtestLogic(rawData, config);
                 let executedOrders = Object.values(chartData)
                     .filter((order) => order.executedOrder !== undefined)
-                    .map((order) => order.executedOrder!);
+                    .map((order) => order.executedOrder!).flat();
                 const analyseData = processConfigDataForAnalyse(executedOrders, config);
 
                 dispatch(chartConfigActions.resetState("")); // Reset before run a new backtest

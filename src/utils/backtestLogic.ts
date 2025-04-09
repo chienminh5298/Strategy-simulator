@@ -19,7 +19,7 @@ export type dcaOpenOrderType = { id: number; entryTime: string; entryPrice: numb
 export type ChartCandleType = {
     [date: string]: {
         candle: candleType;
-        executedOrder?: Required<OrderType>;
+        executedOrder?: Required<OrderType>[];
         openOrderSide?: "long" | "short";
         openOrder?: dcaOpenOrderType;
         dcaExecutedOrder?: Required<OrderType>[]; // Optional, for DCA orders
@@ -124,7 +124,6 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
 
     const processCreateNewCandleOrder = (config: configType, candle: candleType) => {
         const prevCandle = getPrevCandle(config, candle);
-        console.log(prevCandle);
         const side = getNewOrderSide({ config, isTriggerOrder: false, prevCandle });
         createNewOrder({ candle, entryPrice: candle.Open, isTrigger: false, side, config });
     };
@@ -207,7 +206,7 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
             const tempOrder = { ...openOrder[order.id], markPrice, executedTime: candle.Date, profit };
             delete openOrder[order.id];
 
-            response[candle.Date] = { ...response[candle.Date], executedOrder: tempOrder }; // This is not a part of logic
+            response[candle.Date] = { ...response[candle.Date], executedOrder: [tempOrder] }; // This is not a part of logic
         }
     };
 
@@ -251,25 +250,23 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
         }
     }
 
-    response = convertTo2hChart(response);
+    response = convertTo8hChart(response);
 
     return response;
 };
 
-const convertTo2hChart = (chart5m: ChartCandleType): ChartCandleType => {
+const convertTo8hChart = (chart5m: ChartCandleType): ChartCandleType => {
     let response: ChartCandleType = {};
 
     // Convert the object values to an array and sort them by date ascending.
-    const data5m = Object.values(chart5m).sort(
-        (a, b) => new Date(a.candle.Date).getTime() - new Date(b.candle.Date).getTime()
-    );
+    const data5m = Object.values(chart5m).sort((a, b) => new Date(a.candle.Date).getTime() - new Date(b.candle.Date).getTime());
 
-    // Group the 5-minute candles by 2-hour buckets.
+    // Group the 5-minute candles by 8-hour buckets.
     const groups: { [bucketKey: string]: typeof data5m } = {};
     for (const item of data5m) {
         const dateObj = new Date(item.candle.Date);
-        // Round down to the nearest even-numbered hour (0, 2, 4, ..., 22)
-        const roundedHour = Math.floor(dateObj.getUTCHours() / 2) * 2;
+        // Round down to the nearest 8-hour mark (0, 8, 16)
+        const roundedHour = Math.floor(dateObj.getUTCHours() / 8) * 8;
         dateObj.setUTCHours(roundedHour, 0, 0, 0);
         const bucketKey = dateObj.toISOString();
 
@@ -279,14 +276,14 @@ const convertTo2hChart = (chart5m: ChartCandleType): ChartCandleType => {
         groups[bucketKey].push(item);
     }
 
-    // Aggregate only if a group has exactly 24 candles (24 x 5min = 2h)
+    // Aggregate only if a group has exactly 96 candles (96 x 5min = 8h)
     for (const bucketKey in groups) {
         const group = groups[bucketKey];
-        if (group.length === 24) {
+        if (group.length === 96) {
             const open = group[0].candle.Open;
-            const close = group[23].candle.Close;
-            const high = Math.max(...group.map(item => item.candle.High));
-            const low = Math.min(...group.map(item => item.candle.Low));
+            const close = group[95].candle.Close;
+            const high = Math.max(...group.map((item) => item.candle.High));
+            const low = Math.min(...group.map((item) => item.candle.Low));
             const volume = group.reduce((sum, item) => sum + item.candle.Volume, 0);
 
             const aggregatedCandle = {
@@ -298,12 +295,16 @@ const convertTo2hChart = (chart5m: ChartCandleType): ChartCandleType => {
                 Volume: volume,
             };
 
-            const executedOrder = group.find(item => item.executedOrder)?.executedOrder;
-            const openOrderSide = group.find(item => item.openOrderSide)?.openOrderSide;
+            const executedOrder = group
+                .filter((item) => item.executedOrder !== undefined)
+                .map((item) => item.executedOrder)
+                .flat().sort((a, b) => new Date(b!.entryTime!).getTime() - new Date(a!.entryTime!).getTime());
+
+            const openOrderSide = group.find((item) => item.openOrderSide)?.openOrderSide;
 
             response[bucketKey] = {
                 candle: aggregatedCandle,
-                executedOrder,
+                executedOrder: executedOrder.filter((order): order is Required<OrderType> => order !== undefined),
                 openOrderSide,
             };
         }
@@ -311,6 +312,3 @@ const convertTo2hChart = (chart5m: ChartCandleType): ChartCandleType => {
 
     return response;
 };
-
-
-

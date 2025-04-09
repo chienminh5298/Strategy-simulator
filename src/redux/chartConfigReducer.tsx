@@ -79,7 +79,7 @@ const chartSlice = createSlice({
             state.history = [];
         },
         updateHistory(state, payload) {
-            Object.assign(state.history, [payload.payload, ...state.history]);
+            Object.assign(state.history, [...payload.payload, ...state.history]);
         },
     },
 });
