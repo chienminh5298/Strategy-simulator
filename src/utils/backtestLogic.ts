@@ -1,5 +1,7 @@
 import { configType, StoplossType } from "@src/component/config/customize";
 import { candleType } from "@src/redux/dataReducer";
+import { roundQtyToNDecimal } from ".";
+import { BINANCE_TAKER_FEE } from "@src/brokerFee";
 
 export type OrderType = {
     id: number;
@@ -12,6 +14,7 @@ export type OrderType = {
     qty: number;
     profit?: number; // Optional
     stoplossIdx: number;
+    fee: number;
 };
 
 export type dcaOpenOrderType = { id: number; entryTime: string; entryPrice: number; qty: number };
@@ -170,7 +173,7 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
             const order = openOrder[id];
             const stoploss: StoplossType[] = order.isTrigger ? config.triggerStrategy.stoplosses : config.strategy.stoplosses;
             const markPrice = getMarkPRice(stoploss[order.stoplossIdx].percent, order.side, order.entryPrice);
-            if ((order.side === "long" && candle.Low <= markPrice) || (order.side === "short" && candle.Low >= markPrice)) {
+            if ((order.side === "long" && candle.Low <= markPrice) || (order.side === "short" && candle.High >= markPrice)) {
                 // close order
                 closeOrder(order, markPrice, candle);
             }
@@ -187,14 +190,16 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
 
     const createNewOrder = ({ candle, entryPrice, config, isTrigger, side }: CreateNewOrderType) => {
         const orderId = randomId();
+        const qty = config.token === "SOL" ? roundQtyToNDecimal(config.value / entryPrice, 1) : config.value / entryPrice;
         openOrder[orderId] = {
             id: orderId,
             entryTime: candle.Date,
             entryPrice,
-            qty: config.value / entryPrice,
+            qty: qty,
             isTrigger,
             side,
             stoplossIdx: 0,
+            fee: BINANCE_TAKER_FEE * qty * entryPrice,
         };
 
         response[candle.Date] = { ...response[candle.Date], openOrderSide: side }; // This is not a part of logic
@@ -202,7 +207,7 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
 
     const closeOrder = (order: OrderType, markPrice: number, candle: candleType) => {
         if (openOrder[order.id]) {
-            const profit = getProfit({ qty: order.qty, side: order.side, markPrice, entryPrice: order.entryPrice });
+            const profit = getProfit({ qty: order.qty, side: order.side, markPrice, entryPrice: order.entryPrice }) - order.fee;
             const tempOrder = { ...openOrder[order.id], markPrice, executedTime: candle.Date, profit };
             delete openOrder[order.id];
 
@@ -250,25 +255,25 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
         }
     }
 
-    response = convertTo8hChart(response);
+    response = convertTo1hChart(response);
 
     return response;
 };
 
-const convertTo8hChart = (chart5m: ChartCandleType): ChartCandleType => {
+const convertTo1hChart = (chart5m: ChartCandleType): ChartCandleType => {
     let response: ChartCandleType = {};
 
     // Convert the object values to an array and sort them by date ascending.
     const data5m = Object.values(chart5m).sort((a, b) => new Date(a.candle.Date).getTime() - new Date(b.candle.Date).getTime());
 
-    // Group the 5-minute candles by 8-hour buckets.
+    // Group the 5-minute candles by 1-hour buckets.
     const groups: { [bucketKey: string]: typeof data5m } = {};
     for (const item of data5m) {
         const dateObj = new Date(item.candle.Date);
-        // Round down to the nearest 8-hour mark (0, 8, 16)
-        const roundedHour = Math.floor(dateObj.getUTCHours() / 8) * 8;
-        dateObj.setUTCHours(roundedHour, 0, 0, 0);
-        const bucketKey = dateObj.toISOString();
+        // Set to the start of the hour
+        const bucketDate = new Date(dateObj);
+        bucketDate.setUTCMinutes(0, 0, 0);
+        const bucketKey = bucketDate.toISOString();
 
         if (!groups[bucketKey]) {
             groups[bucketKey] = [];
@@ -276,15 +281,15 @@ const convertTo8hChart = (chart5m: ChartCandleType): ChartCandleType => {
         groups[bucketKey].push(item);
     }
 
-    // Aggregate only if a group has exactly 96 candles (96 x 5min = 8h)
+    // For each group, aggregate the candles if there are exactly 12 candles (5m x 12 = 60m).
     for (const bucketKey in groups) {
         const group = groups[bucketKey];
-        if (group.length === 96) {
+        if (group.length === 12) {
             const open = group[0].candle.Open;
-            const close = group[95].candle.Close;
-            const high = Math.max(...group.map((item) => item.candle.High));
-            const low = Math.min(...group.map((item) => item.candle.Low));
-            const volume = group.reduce((sum, item) => sum + item.candle.Volume, 0);
+            const close = group[11].candle.Close;
+            const high = Math.max(...group.map((g) => g.candle.High));
+            const low = Math.min(...group.map((g) => g.candle.Low));
+            const volume = group.reduce((sum, g) => sum + g.candle.Volume, 0);
 
             const aggregatedCandle = {
                 Date: bucketKey,
@@ -298,13 +303,14 @@ const convertTo8hChart = (chart5m: ChartCandleType): ChartCandleType => {
             const executedOrder = group
                 .filter((item) => item.executedOrder !== undefined)
                 .map((item) => item.executedOrder)
-                .flat().sort((a, b) => new Date(b!.entryTime!).getTime() - new Date(a!.entryTime!).getTime());
+                .flat()
+                .sort((a, b) => new Date(b!.executedTime!).getTime() - new Date(a!.executedTime!).getTime());
 
             const openOrderSide = group.find((item) => item.openOrderSide)?.openOrderSide;
 
             response[bucketKey] = {
                 candle: aggregatedCandle,
-                executedOrder: executedOrder.filter((order): order is Required<OrderType> => order !== undefined),
+                executedOrder: executedOrder as Required<OrderType>[],
                 openOrderSide,
             };
         }

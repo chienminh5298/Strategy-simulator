@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import { chartConfigActions } from "@src/redux/chartConfigReducer";
 import { ColorType, createChart } from "lightweight-charts";
-import styles from "@src/App.module.scss";
+import { configActions } from "@src/redux/configReducer";
 import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "../redux/store";
-import { configActions } from "../redux/configReducer";
-import { chartConfigActions } from "../redux/chartConfigReducer";
+import { useEffect, useRef } from "react";
+import { RootState } from "@src/redux/store";
+import styles from "@src/App.module.scss";
 
 const Chart = () => {
     const dispatch = useDispatch();
@@ -103,14 +103,14 @@ const Chart = () => {
                 let borderColor = "#e4ff00";
                 let shape = "";
 
-                // if (dateData.openOrderSide) {
-                //     text = dateData.openOrderSide.toUpperCase();
-                // }
-                // if (text === "SHORT") {
-                //     shape = "arrowDown";
-                // } else if (text === "LONG") {
-                //     shape = "arrowUp";
-                // }
+                if (dateData.openOrderSide) {
+                    text = dateData.openOrderSide.toUpperCase();
+                }
+                if (text === "SHORT") {
+                    shape = "arrowDown";
+                } else if (text === "LONG") {
+                    shape = "arrowUp";
+                }
 
                 candleSeries.update({
                     time: dateData.time,
@@ -118,7 +118,7 @@ const Chart = () => {
                     high: dateData.high,
                     low: dateData.low,
                     close: dateData.close,
-                    // ...(text !== "" ? { borderColor, borderWidth: 20 } : {}),
+                    ...(text !== "" ? { borderColor, borderWidth: 20 } : {}),
                 });
 
                 // Volume series update with transparency
@@ -134,7 +134,7 @@ const Chart = () => {
                         position: text === "SHORT" ? "aboveBar" : "belowBar",
                         color: text === "SHORT" ? "#ef476f" : "#06d6a0",
                         shape,
-                        // text,
+                        text,
                         size: 2,
                     });
                     candleSeries.setMarkers(markers);

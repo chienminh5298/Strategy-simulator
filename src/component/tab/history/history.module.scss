@@ -23,7 +23,7 @@
     }
     .table {
         display: grid;
-        grid-template-columns: repeat(8, 1fr); // 8 equal columns
+        grid-template-columns: repeat(9, 1fr); // 8 equal columns
         width: 100%;
         padding: 10px;
         padding-top: 0;
@@ -40,14 +40,15 @@
             color: white;
         }
         // Alternate row background color for readability
-        .cell:nth-child(16n + 9),
-        .cell:nth-child(16n + 10),
-        .cell:nth-child(16n + 11),
-        .cell:nth-child(16n + 12),
-        .cell:nth-child(16n + 13),
-        .cell:nth-child(16n + 14),
-        .cell:nth-child(16n + 15),
-        .cell:nth-child(16n + 16) {
+        .cell:nth-child(18n + 10),
+        .cell:nth-child(18n + 11),
+        .cell:nth-child(18n + 12),
+        .cell:nth-child(18n + 13),
+        .cell:nth-child(18n + 14),
+        .cell:nth-child(18n + 15),
+        .cell:nth-child(18n + 16),
+        .cell:nth-child(18n + 17),
+        .cell:nth-child(18n + 18) {
             background-color: #e9ecef;
         }
 
@@ -58,6 +59,28 @@
         .sell {
             color: red;
             font-weight: bold;
+        }
+    }
+    .pagination {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin: 10px 0px;
+        .content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            .page {
+                margin: 0 5px;
+            }
+            .button {
+                cursor: pointer;
+                color: gray;
+                font-size: 20px;
+                &:active {
+                    transform: translate(1px, 1px);
+                }
+            }
         }
     }
 }

@@ -341,12 +341,12 @@ const RecommendConfig = () => {
                                     <div className={styles.direction}>Direction compared to strategy:</div>
                                     <div className={styles.option}>
                                         <label className={`${styles.option} ${styles.short}`}>
-                                            <input type="radio" name="triggerDirection" value="same" readOnly checked={recommendConfig?.strategy.direction === "same"} />
+                                            <input type="radio" name="triggerDirection" value="same" readOnly checked={recommendConfig?.triggerStrategy.direction === "same"} />
                                             <span>Same</span>
                                         </label>
 
                                         <label className={`${styles.option} ${styles.long}`}>
-                                            <input type="radio" name="triggerDirection" value="opposite" readOnly checked={recommendConfig?.strategy.direction === "opposite"} />
+                                            <input type="radio" name="triggerDirection" value="opposite" readOnly checked={recommendConfig?.triggerStrategy.direction === "opposite"} />
                                             <span>Opposite</span>
                                         </label>
                                     </div>

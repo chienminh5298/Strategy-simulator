@@ -182,8 +182,7 @@ function processProfitByMonthlyData(orders: Required<OrderType>[]) {
 
 export const processConfigDataForAnalyse = (orders: Required<OrderType>[], config: configType) => {
     processValueOverTimeData(orders);
-    const BINANCE_TAKER_FEE = 0.0005; // 0.05%
-    const fee = orders.reduce((total, o) => total + o.qty * o.entryPrice, 0) * BINANCE_TAKER_FEE;
+    const fee = orders.reduce((total, o) => total + o.fee, 0);
 
     const proftOrders = orders.filter((order) => order.profit > 0);
     const lossOrders = orders.filter((order) => order.profit < 0);
@@ -248,13 +247,13 @@ export const processConfigDataForAnalyse = (orders: Required<OrderType>[], confi
     let countHitTargetStrategy: number[] = Array(config.strategy.stoplosses.length).fill(0);
     strategyOrders.forEach((order) => {
         for (let i = 0; i <= order.stoplossIdx; i++) {
-            countHitTargetStrategy[i]++;
+            countHitTargetStrategy[i + 1]++;
         }
     });
     let countHitTargetTriggerStrategy: number[] = Array(config.triggerStrategy.stoplosses.length).fill(0);
     triggerStrategyOrders.forEach((order) => {
         for (let i = 0; i <= order.stoplossIdx; i++) {
-            countHitTargetTriggerStrategy[i]++;
+            countHitTargetTriggerStrategy[i + 1]++;
         }
     });
 
@@ -443,4 +442,68 @@ export const get4hData = (data: { [date: string]: candleType }) => {
     }
 
     return data4H;
+};
+
+export const roundQtyToNDecimal: (price: string | number, minQty: number) => number = (price: string | number, minQty: number) => {
+    const precision = getPrecisionDigits(minQty);
+    var indexOfDot = price.toString().indexOf(".");
+    var result = price;
+    if (indexOfDot !== -1) {
+        result = price.toString().slice(0, indexOfDot + precision + 1);
+    }
+    result = result.toString();
+    return parseFloat(result);
+};
+
+const getPrecisionDigits = (floatNum: number) => {
+    if (!Number.isFinite(floatNum)) {
+        return 0; // Return 0 if it's not a valid finite number
+    }
+
+    // Convert the number to a string
+    const floatStr = floatNum.toString();
+
+    // Check if there's a decimal point
+    if (floatStr.includes(".")) {
+        // Return the length of digits after the decimal point
+        return floatStr.split(".")[1].length;
+    }
+
+    return 0; // Return 0 if there's no decimal point
+};
+
+export const merge5mTo1hFromObject = (dayData: { [date: string]: candleType }): candleType[] => {
+    const entries = Object.values(dayData).sort((a, b) => {
+        return new Date(a.Date).getTime() - new Date(b.Date).getTime();
+    });
+
+    const groups: { [hourKey: string]: candleType[] } = {};
+
+    for (const entry of entries) {
+        const timestamp = new Date(entry.Date).getTime();
+        const hourKey = new Date(timestamp - (timestamp % (60 * 60 * 1000))).toISOString();
+
+        if (!groups[hourKey]) {
+            groups[hourKey] = [];
+        }
+
+        groups[hourKey].push(entry);
+    }
+
+    const result: candleType[] = [];
+
+    for (const hourKey of Object.keys(groups).sort()) {
+        const group = groups[hourKey];
+
+        result.push({
+            Open: group[0].Open,
+            Close: group[group.length - 1].Close,
+            High: Math.max(...group.map((d) => d.High)),
+            Low: Math.min(...group.map((d) => d.Low)),
+            Volume: group.reduce((acc, d) => acc + d.Volume, 0),
+            Date: hourKey,
+        });
+    }
+
+    return result;
 };

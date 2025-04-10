@@ -2,15 +2,39 @@ import { checkIsNewCandle, getDayColor, getMarkPRice, getProfit, OrderType, rand
 import { configType, StoplossType } from "@src/component/config/customize";
 import { RecommendConfigType } from "@src/redux/configReducer";
 import { candleType } from "@src/redux/dataReducer";
+import { merge5mTo1hFromObject, roundQtyToNDecimal } from ".";
+import { BINANCE_TAKER_FEE } from "@src/brokerFee";
 
 let stoplossOptions = [0]; // Initialize with a default value
 let entryLossPercents = [0]; // Initialize with a default value
+let data1h: candleType[] = [];
+let targetOptions = [0]; // Initialize w
+// ith a default value
+function randomDecimalExclusive(from: number, to: number): number {
+    if (to - from <= 0.01) {
+        throw new Error("Invalid range: must allow space for at least one 0.01 step.");
+    }
+
+    let result: number;
+
+    do {
+        const raw = Math.random() * (to - from) + from;
+        result = parseFloat(raw.toFixed(2));
+    } while (result <= from || result >= to);
+
+    return result;
+}
 
 // Use genetic algorithm to find the best config for the given data
 export const recommendLogic = (rcConfig: RecommendConfigType, data: { [date: string]: candleType }) => {
-    const POP_SIZE = 40;
+    const POP_SIZE = 50;
     const GENERATIONS = 10;
 
+    data1h = merge5mTo1hFromObject(data);
+
+    const pricePercentMoveAverage = getPriceMoveAverage(data1h, rcConfig.setting.timeFrame);
+    // const pricePercentMoveAverage = 2;
+    targetOptions = generateTarget(pricePercentMoveAverage);
     stoplossOptions = generateStoploss(rcConfig.maxLossPercent);
     entryLossPercents = stoplossOptions.filter((p) => p < 0);
 
@@ -62,35 +86,44 @@ function crossoverTargets(aTargets: StoplossType[], bTargets: StoplossType[]): S
         let sl: number, tp: number;
         const useAverage = Math.random() < 0.5;
 
-        if (useAverage) {
-            sl = Math.round((aTargets[i].percent + bTargets[i].percent) * 50) / 100;
-            tp = Math.round((aTargets[i].target + bTargets[i].target) * 50) / 100;
+        // Entry target
+        if (i === 0) {
+            tp = 0;
+            if (useAverage) {
+                sl = Math.round((aTargets[i].percent + bTargets[i].percent) * 50) / 100;
+            } else {
+                const pickFrom = Math.random() < 0.5 ? aTargets : bTargets;
+                sl = pickFrom[i].percent;
+            }
         } else {
-            const pickFrom = Math.random() < 0.5 ? aTargets : bTargets;
-            sl = pickFrom[i].percent;
-            tp = pickFrom[i].target;
-        }
+            if (useAverage) {
+                sl = Math.round((aTargets[i].percent + bTargets[i].percent) * 50) / 100;
+                tp = Math.round((aTargets[i].target + bTargets[i].target) * 50) / 100;
+            } else {
+                const pickFrom = Math.random() < 0.5 ? aTargets : bTargets;
+                sl = pickFrom[i].percent;
+                tp = pickFrom[i].target;
 
-        if (sl > tp) sl = tp;
+                // ✅ Ensure target is greater than previous one and > 0
+                if (tp <= 0 || tp <= childTargets[i - 1].target) {
+                    tp = parseFloat((childTargets[i - 1].target + 0.2).toFixed(2));
+                }
+
+                // ✅ If not last target, sl must be < tp
+                if (i < length - 1 && sl >= tp) {
+                    sl = randomDecimalExclusive(childTargets[i - 1].percent, tp);
+                    // if (sl < 0) sl = parseFloat((tp / 2).toFixed(2));
+                }
+
+                // ✅ If last target, sl = tp
+                if (i === length - 1) {
+                    sl = tp;
+                }
+            }
+        }
         childTargets.push({ percent: sl, target: tp });
     }
 
-    for (let i = 1; i < childTargets.length; i++) {
-        if (childTargets[i].target <= childTargets[i - 1].target) {
-            childTargets[i].target = parseFloat((childTargets[i - 1].target + 0.2).toFixed(2));
-        }
-        if (childTargets[i].percent > childTargets[i].target) {
-            childTargets[i].percent = childTargets[i].target;
-        }
-    }
-
-    // Đảm bảo phần tử cuối cùng có percent = target nếu cần
-    const last = childTargets[childTargets.length - 1];
-    if (last.percent !== last.target) {
-        last.percent = last.target;
-    }
-
-    childTargets[0] = { target: 0, percent: randomPick(entryLossPercents) };
     return childTargets;
 }
 
@@ -140,9 +173,50 @@ type Individual = {
     fitness: number;
 };
 
-const generateTarget = () => {
+const getPriceMoveAverage = (candleData: candleType[], timeFrame: "1h" | "4h" | "1d"): number => {
+    if (!candleData.length) return 0;
+
+    // Determine the group size based on the time frame
+    const groupSize = timeFrame === "1h" ? 1 : timeFrame === "4h" ? 4 : 24;
+
+    const grouped: candleType[][] = [];
+
+    // Sort candles by date ascending
+    const sortedCandles = [...candleData].sort((a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime());
+
+    // Group the candles by the timeframe
+    for (let i = 0; i < sortedCandles.length; i += groupSize) {
+        const group = sortedCandles.slice(i, i + groupSize);
+        if (group.length === groupSize) {
+            grouped.push(group);
+        }
+    }
+
+    let totalMovement = 0;
+    let validCount = 0;
+
+    grouped.forEach((group) => {
+        const first = group[0];
+
+        if (first.Open === 0) return;
+
+        const high = Math.max(...group.map((c) => c.High));
+        const low = Math.min(...group.map((c) => c.Low));
+
+        const upPercent = ((high - first.Open) / first.Open) * 100;
+        const downPercent = ((first.Open - low) / first.Open) * 100;
+        const movementAverage = (upPercent + downPercent) / 2;
+
+        totalMovement += movementAverage;
+        validCount++;
+    });
+
+    return validCount === 0 ? 0 : parseFloat((totalMovement / validCount).toFixed(2));
+};
+
+const generateTarget = (pricePercentMoveAverage: number) => {
     let targets: number[] = [];
-    for (let i = 0.2; i <= 5; i += 0.2) {
+    for (let i = 0.2; i <= pricePercentMoveAverage; i += 0.2) {
         targets.push(parseFloat(i.toFixed(2)));
     }
     return targets;
@@ -150,13 +224,12 @@ const generateTarget = () => {
 
 const generateStoploss = (min: number) => {
     let stoplosses: number[] = [];
-    for (let i = min; i <= 5; i += 0.2) {
+    for (let i = min; i <= 5; i += 0.1) {
         stoplosses.push(parseFloat(i.toFixed(2)));
     }
     return stoplosses;
 };
 
-const targetOptions = generateTarget();
 const keepOverNightOptions = [true, false];
 const isTriggerOptions = [true, false];
 const directionOptions = ["same", "opposite"];
@@ -324,7 +397,7 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
             const order = openOrder[id];
             const stoploss: StoplossType[] = order.isTrigger ? config.triggerStrategy.stoplosses : config.strategy.stoplosses;
             const markPrice = getMarkPRice(stoploss[order.stoplossIdx].percent, order.side, order.entryPrice);
-            if ((order.side === "long" && candle.Low <= markPrice) || (order.side === "short" && candle.Low >= markPrice)) {
+            if ((order.side === "long" && candle.Low <= markPrice) || (order.side === "short" && candle.High >= markPrice)) {
                 // close order
                 closeOrder(order, markPrice, candle);
             }
@@ -341,20 +414,23 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
 
     const createNewOrder = ({ candle, entryPrice, config, isTrigger, side }: CreateNewOrderType) => {
         const orderId = randomId();
+        const qty = config.token === "SOL" ? roundQtyToNDecimal(config.value / entryPrice, 1) : config.value / entryPrice;
+
         openOrder[orderId] = {
             id: orderId,
             entryTime: candle.Date,
             entryPrice,
-            qty: config.value / entryPrice,
+            qty,
             isTrigger,
             side,
             stoplossIdx: 0,
+            fee: BINANCE_TAKER_FEE * qty * entryPrice,
         };
     };
 
     const closeOrder = (order: OrderType, markPrice: number, candle: candleType) => {
         if (openOrder[order.id]) {
-            const profit = getProfit({ qty: order.qty, side: order.side, markPrice, entryPrice: order.entryPrice });
+            const profit = getProfit({ qty: order.qty, side: order.side, markPrice, entryPrice: order.entryPrice }) - order.fee;
             sum += profit;
             delete openOrder[order.id];
         }

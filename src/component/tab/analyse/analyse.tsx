@@ -107,7 +107,7 @@ const AnalyseTab = () => {
                     <h2>Performance summary</h2>
                     <div className={styles.content}>
                         <div className={styles.row}>
-                            <div className={styles.title}>Total PnL</div>
+                            <div className={styles.title}>Total PnL (included fee)</div>
                             <div className={`${styles.value} ${overView.totalPnL > 0 ? styles.buy : styles.sell}`}>{toUSD(overView.totalPnL)}</div>
                         </div>
                         <div className={styles.row}>

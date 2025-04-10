@@ -28,7 +28,7 @@ const initialState: {
         year: "",
         value: 500,
         setting: {
-            timeFrame: "1d",
+            timeFrame: "4h",
             closeOrderBeforeNewCandle: true,
             isTrigger: true,
         },
