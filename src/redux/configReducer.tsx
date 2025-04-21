@@ -28,8 +28,8 @@ const initialState: {
         year: "",
         value: 500,
         setting: {
-            timeFrame: "4h",
-            closeOrderBeforeNewCandle: true,
+            timeFrame: "1d",
+            closeOrderBeforeNewCandle: false,
             isTrigger: true,
         },
         strategy: {
@@ -37,11 +37,11 @@ const initialState: {
             stoplosses: [
                 {
                     target: 0,
-                    percent: -0.7,
+                    percent: -1.85,
                 },
                 {
-                    target: 0.7,
-                    percent: 0.7,
+                    target: 0.6,
+                    percent: 0.6,
                 },
             ],
         },
@@ -50,11 +50,11 @@ const initialState: {
             stoplosses: [
                 {
                     target: 0,
-                    percent: -0.7,
+                    percent: -1.5,
                 },
                 {
-                    target: 0.7,
-                    percent: 0.7,
+                    target: 4.2,
+                    percent: 4.2,
                 },
             ],
         },

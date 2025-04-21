@@ -143,21 +143,19 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
                 openOrder[order.id] = { ...openOrder[order.id], stoplossIdx: openOrder[order.id].stoplossIdx + 1 };
                 // Check is last target
                 if (order.stoplossIdx + 1 === stoploss.length - 1) {
-                    //// Close order
-                    // Check strategy or triggerStrategy
-                    if (!order.isTrigger) {
-                        // Close strategy order
-                        closeOrder(order, markPrice, candle);
-
-                        if (config.setting.isTrigger) {
-                            // new trigger order
-                            const side = getTriggerOrderSide(order, config);
+                    // Check is strategy and trigger order is set
+                    if (config.setting.isTrigger && !order.isTrigger) {
+                        // new trigger order
+                        const side = getTriggerOrderSide(order, config);
+                        const trend = lastFiveHATrend(dataValues, candle.Date);
+                        if ((trend === "GREEN" && side === "short") || (trend === "RED" && side === "long")) {
+                            console.log(candle.Date)
+                        } else {
                             createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
                         }
-                    } else {
-                        closeOrder(order, markPrice, candle);
                     }
-                } else {
+                    // Close order
+                    closeOrder(order, markPrice, candle);
                 }
             }
         }
@@ -318,3 +316,73 @@ const convertTo1hChart = (chart5m: ChartCandleType): ChartCandleType => {
 
     return response;
 };
+
+type DailyOHLC = { open: number; high: number; low: number; close: number };
+type HACandle = {
+    haOpen: number;
+    haClose: number;
+    haHigh: number;
+    haLow: number;
+};
+
+/* --- 1. Gom nến 5 m thành daily OHLC (00:00 UTC → 23:55 UTC) --- */
+function aggregateDailyUTC(candles: candleType[]): DailyOHLC[] {
+    const buckets = new Map<number, DailyOHLC>(); // key = Unix‑day (UTC)
+
+    for (const c of candles) {
+        const t = Date.parse(c.Date); // ms UTC
+        const dayId = Math.floor(t / 86_400_000); // số ngày từ 1970‑01‑01
+        const bucket = buckets.get(dayId);
+
+        if (!bucket) {
+            buckets.set(dayId, { open: c.Open, high: c.High, low: c.Low, close: c.Close });
+        } else {
+            bucket.high = Math.max(bucket.high, c.High);
+            bucket.low = Math.min(bucket.low, c.Low);
+            bucket.close = c.Close;
+        }
+    }
+
+    // sắp xếp theo thời gian tăng dần
+    return [...buckets.entries()].sort((a, b) => a[0] - b[0]).map((e) => e[1]);
+}
+
+/* --- 2. Chuyển toàn bộ daily‑OHLC sang Heikin‑Ashi --- */
+function toHeikinAshi(series: DailyOHLC[]): HACandle[] {
+    const out: HACandle[] = [];
+    for (let i = 0; i < series.length; i++) {
+        const { open, high, low, close } = series[i];
+        const haClose = (open + high + low + close) / 4;
+        const haOpen =
+            i === 0
+                ? (open + close) / 2 // seed đầu tiên
+                : (out[i - 1].haOpen + out[i - 1].haClose) / 2; // chuẩn
+
+        const haHigh = Math.max(high, haOpen, haClose);
+        const haLow = Math.min(low, haOpen, haClose);
+        out.push({ haOpen, haClose, haHigh, haLow });
+    }
+    return out;
+}
+
+/* --- 3. Kiểm tra 5 nến HA ngay trước pivot có cùng màu --- */
+export function lastFiveHATrend(raw5m: candleType[], pivotUTC: Date | string): "GREEN" | "RED" | "MIXED" {
+    const pivot = typeof pivotUTC === "string" ? new Date(pivotUTC) : pivotUTC;
+
+    // Bỏ mọi nến 5 m **>= pivot** (chỉ lấy dữ liệu trước pivot)
+    const history = raw5m.filter((c) => new Date(c.Date) < pivot);
+
+    const dailySeries = aggregateDailyUTC(history);
+    if (dailySeries.length < 6) return "MIXED"; // thiếu dữ liệu
+
+    const haSeries = toHeikinAshi(dailySeries);
+    const lastFive = haSeries.slice(-5); // D‑5 … D‑1
+
+    const allGreen = lastFive.every((c) => c.haClose > c.haOpen);
+    if (allGreen) return "GREEN";
+
+    const allRed = lastFive.every((c) => c.haClose < c.haOpen);
+    if (allRed) return "RED";
+
+    return "MIXED";
+}

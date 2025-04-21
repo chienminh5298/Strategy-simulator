@@ -1,4 +1,4 @@
-import { checkIsNewCandle, getDayColor, getMarkPRice, getProfit, OrderType, randomId } from "@src/utils/backtestLogic";
+import { checkIsNewCandle, getDayColor, getMarkPRice, getProfit, lastFiveHATrend, OrderType, randomId } from "@src/utils/backtestLogic";
 import { configType, StoplossType } from "@src/component/config/customize";
 import { RecommendConfigType } from "@src/redux/configReducer";
 import { candleType } from "@src/redux/dataReducer";
@@ -376,7 +376,12 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
                         if (config.setting.isTrigger) {
                             // new trigger order
                             const side = getTriggerOrderSide(order, config);
-                            createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
+                            const trend = lastFiveHATrend(dataValues, candle.Date);
+                            if ((trend === "GREEN" && side === "short") || (trend === "RED" && side === "long")) {
+                                console.log(candle.Date);
+                            } else {
+                                createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
+                            }
                         }
                     } else {
                         closeOrder(order, markPrice, candle);
