@@ -37,11 +37,11 @@ const initialState: {
             stoplosses: [
                 {
                     target: 0,
-                    percent: -1.85,
+                    percent: -0.7,
                 },
                 {
-                    target: 0.6,
-                    percent: 0.6,
+                    target: 0.7,
+                    percent: 0.7,
                 },
             ],
         },
@@ -50,11 +50,11 @@ const initialState: {
             stoplosses: [
                 {
                     target: 0,
-                    percent: -1.5,
+                    percent: -0.7,
                 },
                 {
-                    target: 4.2,
-                    percent: 4.2,
+                    target: 0.7,
+                    percent: 0.7,
                 },
             ],
         },
