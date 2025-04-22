@@ -147,12 +147,13 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
                     if (config.setting.isTrigger && !order.isTrigger) {
                         // new trigger order
                         const side = getTriggerOrderSide(order, config);
-                        const trend = lastFiveHATrend(dataValues, candle.Date);
-                        if ((trend === "GREEN" && side === "short") || (trend === "RED" && side === "long")) {
-                            console.log(candle.Date)
-                        } else {
-                            createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
-                        }
+                        // const trend = lastFiveHATrend(dataValues, candle.Date);
+                        // if ((trend === "GREEN" && side === "short") || (trend === "RED" && side === "long")) {
+
+                        // } else {
+                        //     createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
+                        // }
+                        createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
                     }
                     // Close order
                     closeOrder(order, markPrice, candle);
