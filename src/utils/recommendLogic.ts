@@ -1,4 +1,4 @@
-import { checkIsNewCandle, getDayColor, getMarkPRice, getProfit, lastFiveHATrend, OrderType, randomId } from "@src/utils/backtestLogic";
+import { aggregateToMap, checkIsNewCandle, getBucketKey, getDayColor, getMarkPRice, getProfit, OrderType, randomId, toHeikinAshi } from "@src/utils/backtestLogic";
 import { configType, StoplossType } from "@src/component/config/customize";
 import { RecommendConfigType } from "@src/redux/configReducer";
 import { candleType } from "@src/redux/dataReducer";
@@ -248,6 +248,7 @@ function randomTargets(numTargets: number): StoplossType[] {
 
         while (true) {
             // ✅ Filter target options tăng dần và loại target lớn nhất nếu không phải target cuối cùng
+            // eslint-disable-next-line no-loop-func
             const tpOptions = targetOptions.filter((t) => {
                 const notTooLow = t > lastTarget;
                 const notMaxIfNotFinal = i === numTargets - 1 || t < targetOptions[targetOptions.length - 1];
@@ -304,55 +305,53 @@ function randomConfig(rcConfig: RecommendConfigType): configType {
 }
 
 const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
+    const timeFrame = rcConfig.setting.timeFrame;
+    let chartData = aggregateToMap(data, timeFrame);
+
+    const sortedBucketKeysChartData = Object.keys(chartData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+    const heikinAshiArr = toHeikinAshi(Object.values(chartData).sort((a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime()));
+
     const dataKey = Object.keys(data);
     const dataValues = Object.values(data);
     let openOrder: { [orderId: number]: OrderType } = {};
     let sum = 0;
 
-    const getPrevCandle = (config: configType, candle: candleType): candleType => {
-        const timeFrameToMinutes = (timeFrame: string): number => {
-            const unit = timeFrame.slice(-1);
-            const value = parseInt(timeFrame.slice(0, -1));
-            if (unit === "m") return value;
-            if (unit === "h") return value * 60;
-            if (unit === "d") return value * 60 * 24;
-            return 5; // fallback to 5 minutes
-        };
+    const getLastFiveHeikinAshiTrend = (pivotUTC: string): "GREEN" | "RED" | "MIXED" => {
+        const pivotKey = getBucketKey(pivotUTC, timeFrame);
+        // Tìm index của pivotKey
+        const idx = sortedBucketKeysChartData.indexOf(pivotKey);
+        if (idx === -1 || idx < 5) {
+            // Không tìm thấy pivotKey hoặc không đủ dữ liệu trước pivot
+            return "MIXED";
+        }
 
-        const getPreviousTimeFrameRange = (dateStr: string, minutes: number): string[] => {
-            const endDate = new Date(dateStr);
-            endDate.setMinutes(endDate.getMinutes() - 5); // exclude current candle
+        // Bỏ mọi nến 5 m **>= pivot** (chỉ lấy dữ liệu trước pivot)
+        const haSeries = heikinAshiArr.slice(idx - 5, idx);
 
-            const startDate = new Date(endDate);
-            startDate.setMinutes(startDate.getMinutes() - minutes + 5);
+        const allGreen = haSeries.every((c) => c.haClose > c.haOpen);
+        if (allGreen) return "GREEN";
 
-            const timestamps: string[] = [];
-            for (let d = new Date(startDate); d <= endDate; d.setMinutes(d.getMinutes() + 5)) {
-                const iso = d.toISOString().slice(0, 19) + ".000Z";
-                timestamps.push(iso);
-            }
+        const allRed = haSeries.every((c) => c.haClose < c.haOpen);
+        if (allRed) return "RED";
 
-            return timestamps;
-        };
+        return "MIXED";
+    };
 
-        const frameMinutes = timeFrameToMinutes(config.setting.timeFrame);
-        const rangeTimestamps = getPreviousTimeFrameRange(candle.Date, frameMinutes);
-        const candles = rangeTimestamps.map((ts) => data[ts]).filter(Boolean);
-
-        return {
-            Date: rangeTimestamps[0],
-            Open: candles[0].Open,
-            High: Math.max(...candles.map((c) => c.High)),
-            Low: Math.min(...candles.map((c) => c.Low)),
-            Close: candles[candles.length - 1].Close,
-            Volume: candles.reduce((sum, c) => sum + c.Volume, 0),
-        };
+    const getPrevCandle = (candledate: string) => {
+        const bucketKey = getBucketKey(candledate, timeFrame);
+        const idx = sortedBucketKeysChartData.indexOf(bucketKey);
+        if (idx === -1 || idx === 0) {
+            return null;
+        }
+        return chartData[sortedBucketKeysChartData[idx - 1]];
     };
 
     const processCreateNewMidNightOrder = (config: configType, candle: candleType) => {
-        const prevCandle = getPrevCandle(config, candle);
-        const side = getNewOrderSide(getDayColor(prevCandle), rcConfig.strategy.direction);
-        createNewOrder({ candle, entryPrice: candle.Open, isTrigger: false, side, config });
+        const prevCandle = getPrevCandle(candle.Date);
+        if (prevCandle) {
+            const side = getNewOrderSide(getDayColor(prevCandle), rcConfig.strategy.direction);
+            createNewOrder({ candle, entryPrice: candle.Open, isTrigger: false, side, config });
+        }
     };
 
     const checkHitTarget = (candle: candleType, config: configType) => {
@@ -376,12 +375,12 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
                         if (config.setting.isTrigger) {
                             // new trigger order
                             const side = getTriggerOrderSide(order, config);
-                            const trend = lastFiveHATrend(dataValues, candle.Date);
-                            if ((trend === "GREEN" && side === "short") || (trend === "RED" && side === "long")) {
-                                console.log(candle.Date);
-                            } else {
-                                createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
-                            }
+                            // const trend = getLastFiveHeikinAshiTrend(candle.Date);
+                            // if ((trend === "GREEN" && side === "short") || (trend === "RED" && side === "long")) {
+                            // } else {
+                            //     createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
+                            // }
+                            createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
                         }
                     } else {
                         closeOrder(order, markPrice, candle);

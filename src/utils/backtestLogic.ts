@@ -79,56 +79,98 @@ export const getProfit = ({ qty, side, markPrice, entryPrice }: { qty: number; s
 };
 export const randomId = () => Math.floor(100000000 + Math.random() * 900000000);
 
+type IndexedCandle = candleType & { ts: number };
+
+const prepareCandles = (data: { [k: string]: candleType }): IndexedCandle[] => {
+    return Object.values(data)
+        .map((c) => ({ ...c, ts: Date.parse(c.Date) }))
+        .sort((a, b) => a.ts - b.ts);
+};
+
+// Hàm này lấy ra nến 5 phút nằm trong khoảng thời gian nào trong ngày.
+// Ví dụ nếu timeFrame = 1h và candleDate = "2023-10-01T00:05:00Z" thì sẽ trả về "2023-10-01T00:00:00Z"
+export const getBucketKey = (candleDate: string, timeFrame: "1h" | "4h" | "1d"): string => {
+    const d = new Date(candleDate);
+    if (timeFrame === "1d") {
+        d.setUTCHours(0, 0, 0, 0);
+    } else {
+        d.setUTCMinutes(0, 0, 0);
+        if (timeFrame === "4h") {
+            const h = d.getUTCHours();
+            d.setUTCHours(Math.floor(h / 4) * 4);
+        }
+    }
+    return d.toISOString();
+};
+
+// Hàm này gom nến 5 phút thành nến 1h hoặc 4h hoặc 1d theo timeFrame
+export const aggregateToMap = (data: { [date: string]: candleType }, timeFrame: "1h" | "4h" | "1d") => {
+    const allCandles: IndexedCandle[] = prepareCandles(data);
+    const map: Record<string, candleType> = {};
+    for (const c of allCandles) {
+        const key = getBucketKey(c.Date, timeFrame);
+        if (!map[key]) {
+            map[key] = { Date: key, Open: c.Open, High: c.High, Low: c.Low, Close: c.Close, Volume: c.Volume };
+        } else {
+            const agg = map[key];
+            agg.High = Math.max(agg.High, c.High);
+            agg.Low = Math.min(agg.Low, c.Low);
+            agg.Close = c.Close;
+            agg.Volume += c.Volume;
+        }
+    }
+    return map;
+};
+
 export const backtestLogic = (data: { [date: string]: candleType }, config: configType) => {
+    const timeFrame = config.setting.timeFrame;
+
+    let chartData = aggregateToMap(data, timeFrame);
+
+    const sortedBucketKeysChartData = Object.keys(chartData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+    const heikinAshiArr = toHeikinAshi(Object.values(chartData).sort((a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime()));
+
     const dataKey = Object.keys(data);
     const dataValues = Object.values(data);
     let openOrder: { [orderId: number]: OrderType } = {};
     let response: ChartCandleType = {};
 
-    const getPrevCandle = (config: configType, candle: candleType): candleType => {
-        const timeFrameToMinutes = (timeFrame: string): number => {
-            const unit = timeFrame.slice(-1);
-            const value = parseInt(timeFrame.slice(0, -1));
-            if (unit === "m") return value;
-            if (unit === "h") return value * 60;
-            if (unit === "d") return value * 60 * 24;
-            return 5; // fallback to 5 minutes
-        };
+    const getLastFiveHeikinAshiTrend = (pivotUTC: string): "GREEN" | "RED" | "MIXED" => {
+        const pivotKey = getBucketKey(pivotUTC, timeFrame);
+        // Tìm index của pivotKey
+        const idx = sortedBucketKeysChartData.indexOf(pivotKey);
+        if (idx === -1 || idx < 5) {
+            // Không tìm thấy pivotKey hoặc không đủ dữ liệu trước pivot
+            return "MIXED";
+        }
 
-        const getPreviousTimeFrameRange = (dateStr: string, minutes: number): string[] => {
-            const endDate = new Date(dateStr);
-            endDate.setMinutes(endDate.getMinutes() - 5); // exclude current candle
+        // Bỏ mọi nến 5 m **>= pivot** (chỉ lấy dữ liệu trước pivot)
+        const haSeries = heikinAshiArr.slice(idx - 5, idx);
 
-            const startDate = new Date(endDate);
-            startDate.setMinutes(startDate.getMinutes() - minutes + 5);
+        const allGreen = haSeries.every((c) => c.haClose > c.haOpen);
+        if (allGreen) return "GREEN";
 
-            const timestamps: string[] = [];
-            for (let d = new Date(startDate); d <= endDate; d.setMinutes(d.getMinutes() + 5)) {
-                const iso = d.toISOString().slice(0, 19) + ".000Z";
-                timestamps.push(iso);
-            }
+        const allRed = haSeries.every((c) => c.haClose < c.haOpen);
+        if (allRed) return "RED";
 
-            return timestamps;
-        };
+        return "MIXED";
+    };
 
-        const frameMinutes = timeFrameToMinutes(config.setting.timeFrame);
-        const rangeTimestamps = getPreviousTimeFrameRange(candle.Date, frameMinutes);
-        const candles = rangeTimestamps.map((ts) => data[ts]).filter(Boolean);
-
-        return {
-            Date: rangeTimestamps[0],
-            Open: candles[0].Open,
-            High: Math.max(...candles.map((c) => c.High)),
-            Low: Math.min(...candles.map((c) => c.Low)),
-            Close: candles[candles.length - 1].Close,
-            Volume: candles.reduce((sum, c) => sum + c.Volume, 0),
-        };
+    const getPrevCandle = (candledate: string) => {
+        const bucketKey = getBucketKey(candledate, timeFrame);
+        const idx = sortedBucketKeysChartData.indexOf(bucketKey);
+        if (idx === -1 || idx === 0) {
+            return null;
+        }
+        return chartData[sortedBucketKeysChartData[idx - 1]];
     };
 
     const processCreateNewCandleOrder = (config: configType, candle: candleType) => {
-        const prevCandle = getPrevCandle(config, candle);
-        const side = getNewOrderSide({ config, isTriggerOrder: false, prevCandle });
-        createNewOrder({ candle, entryPrice: candle.Open, isTrigger: false, side, config });
+        const prevCandle = getPrevCandle(candle.Date);
+        if (prevCandle) {
+            const side = getNewOrderSide({ config, isTriggerOrder: false, prevCandle });
+            createNewOrder({ candle, entryPrice: candle.Open, isTrigger: false, side, config });
+        }
     };
 
     const checkHitTarget = (candle: candleType, config: configType) => {
@@ -147,9 +189,9 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
                     if (config.setting.isTrigger && !order.isTrigger) {
                         // new trigger order
                         const side = getTriggerOrderSide(order, config);
-                        // const trend = lastFiveHATrend(dataValues, candle.Date);
-                        // if ((trend === "GREEN" && side === "short") || (trend === "RED" && side === "long")) {
+                        // const trend = getLastFiveHeikinAshiTrend(candle.Date);
 
+                        // if ((trend === "GREEN" && side === "short") || (trend === "RED" && side === "long")) {
                         // } else {
                         //     createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
                         // }
@@ -222,7 +264,7 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
         checkHitStoploss(candle, config);
         checkHitTarget(candle, config);
 
-        if (checkIsNewCandle(candle.Date, config.setting.timeFrame)) {
+        if (checkIsNewCandle(candle.Date, timeFrame)) {
             // Check if exsist open order
             if (Object.keys(openOrder).length > 0) {
                 // Check setting is order close before new candle
@@ -318,7 +360,6 @@ const convertTo1hChart = (chart5m: ChartCandleType): ChartCandleType => {
     return response;
 };
 
-type DailyOHLC = { open: number; high: number; low: number; close: number };
 type HACandle = {
     haOpen: number;
     haClose: number;
@@ -326,64 +367,20 @@ type HACandle = {
     haLow: number;
 };
 
-/* --- 1. Gom nến 5 m thành daily OHLC (00:00 UTC → 23:55 UTC) --- */
-function aggregateDailyUTC(candles: candleType[]): DailyOHLC[] {
-    const buckets = new Map<number, DailyOHLC>(); // key = Unix‑day (UTC)
-
-    for (const c of candles) {
-        const t = Date.parse(c.Date); // ms UTC
-        const dayId = Math.floor(t / 86_400_000); // số ngày từ 1970‑01‑01
-        const bucket = buckets.get(dayId);
-
-        if (!bucket) {
-            buckets.set(dayId, { open: c.Open, high: c.High, low: c.Low, close: c.Close });
-        } else {
-            bucket.high = Math.max(bucket.high, c.High);
-            bucket.low = Math.min(bucket.low, c.Low);
-            bucket.close = c.Close;
-        }
-    }
-
-    // sắp xếp theo thời gian tăng dần
-    return [...buckets.entries()].sort((a, b) => a[0] - b[0]).map((e) => e[1]);
-}
-
-/* --- 2. Chuyển toàn bộ daily‑OHLC sang Heikin‑Ashi --- */
-function toHeikinAshi(series: DailyOHLC[]): HACandle[] {
+/* --- Chuyển toàn bộ candleType sang Heikin‑Ashi --- */
+export const toHeikinAshi = (series: candleType[]): HACandle[] => {
     const out: HACandle[] = [];
     for (let i = 0; i < series.length; i++) {
-        const { open, high, low, close } = series[i];
-        const haClose = (open + high + low + close) / 4;
+        const { Open, High, Low, Close } = series[i];
+        const haClose = (Open + High + Low + Close) / 4;
         const haOpen =
             i === 0
-                ? (open + close) / 2 // seed đầu tiên
+                ? (Open + Close) / 2 // seed đầu tiên
                 : (out[i - 1].haOpen + out[i - 1].haClose) / 2; // chuẩn
 
-        const haHigh = Math.max(high, haOpen, haClose);
-        const haLow = Math.min(low, haOpen, haClose);
+        const haHigh = Math.max(High, haOpen, haClose);
+        const haLow = Math.min(Low, haOpen, haClose);
         out.push({ haOpen, haClose, haHigh, haLow });
     }
     return out;
-}
-
-/* --- 3. Kiểm tra 5 nến HA ngay trước pivot có cùng màu --- */
-export function lastFiveHATrend(raw5m: candleType[], pivotUTC: Date | string): "GREEN" | "RED" | "MIXED" {
-    const pivot = typeof pivotUTC === "string" ? new Date(pivotUTC) : pivotUTC;
-
-    // Bỏ mọi nến 5 m **>= pivot** (chỉ lấy dữ liệu trước pivot)
-    const history = raw5m.filter((c) => new Date(c.Date) < pivot);
-
-    const dailySeries = aggregateDailyUTC(history);
-    if (dailySeries.length < 6) return "MIXED"; // thiếu dữ liệu
-
-    const haSeries = toHeikinAshi(dailySeries);
-    const lastFive = haSeries.slice(-5); // D‑5 … D‑1
-
-    const allGreen = lastFive.every((c) => c.haClose > c.haOpen);
-    if (allGreen) return "GREEN";
-
-    const allRed = lastFive.every((c) => c.haClose < c.haOpen);
-    if (allRed) return "RED";
-
-    return "MIXED";
-}
+};
