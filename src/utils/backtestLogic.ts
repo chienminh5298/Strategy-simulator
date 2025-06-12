@@ -15,9 +15,19 @@ export type OrderType = {
     profit?: number; // Optional
     stoplossIdx: number;
     fee: number;
+    isSpecialTarget: number;
 };
 
 export type dcaOpenOrderType = { id: number; entryTime: string; entryPrice: number; qty: number };
+
+export type CreateNewOrderType = {
+    candle: candleType;
+    entryPrice: number;
+    config: configType;
+    isTrigger: boolean;
+    side: "long" | "short";
+    isSpecialTarget?: number;
+};
 
 export type ChartCandleType = {
     [date: string]: {
@@ -128,33 +138,52 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
     let chartData = aggregateToMap(data, timeFrame);
 
     const sortedBucketKeysChartData = Object.keys(chartData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-    const heikinAshiArr = toHeikinAshi(Object.values(chartData).sort((a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime()));
+    // const heikinAshiArr = toHeikinAshi(Object.values(chartData).sort((a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime()));
+    const chartArr = Object.values(chartData).sort((a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime());
 
     const dataKey = Object.keys(data);
     const dataValues = Object.values(data);
     let openOrder: { [orderId: number]: OrderType } = {};
     let response: ChartCandleType = {};
 
-    const getLastFiveHeikinAshiTrend = (pivotUTC: string): "GREEN" | "RED" | "MIXED" => {
+    const getLastFiveCandle = (pivotUTC: string) => {
         const pivotKey = getBucketKey(pivotUTC, timeFrame);
-        // Tìm index của pivotKey
         const idx = sortedBucketKeysChartData.indexOf(pivotKey);
         if (idx === -1 || idx < 5) {
             // Không tìm thấy pivotKey hoặc không đủ dữ liệu trước pivot
             return "MIXED";
         }
-
         // Bỏ mọi nến 5 m **>= pivot** (chỉ lấy dữ liệu trước pivot)
-        const haSeries = heikinAshiArr.slice(idx - 5, idx);
-
-        const allGreen = haSeries.every((c) => c.haClose > c.haOpen);
+        const series = chartArr.slice(idx - 5, idx);
+        const allGreen = series.every((c) => c.Close > c.Open);
         if (allGreen) return "GREEN";
 
-        const allRed = haSeries.every((c) => c.haClose < c.haOpen);
+        const allRed = series.every((c) => c.Close < c.Open);
         if (allRed) return "RED";
 
         return "MIXED";
     };
+
+    // const getLastFiveHeikinAshiTrend = (pivotUTC: string): "GREEN" | "RED" | "MIXED" => {
+    //     const pivotKey = getBucketKey(pivotUTC, timeFrame);
+    //     // Tìm index của pivotKey
+    //     const idx = sortedBucketKeysChartData.indexOf(pivotKey);
+    //     if (idx === -1 || idx < 5) {
+    //         // Không tìm thấy pivotKey hoặc không đủ dữ liệu trước pivot
+    //         return "MIXED";
+    //     }
+
+    //     // Bỏ mọi nến 5 m **>= pivot** (chỉ lấy dữ liệu trước pivot)
+    //     const haSeries = heikinAshiArr.slice(idx - 5, idx);
+
+    //     const allGreen = haSeries.every((c) => c.haClose > c.haOpen);
+    //     if (allGreen) return "GREEN";
+
+    //     const allRed = haSeries.every((c) => c.haClose < c.haOpen);
+    //     if (allRed) return "RED";
+
+    //     return "MIXED";
+    // };
 
     const getPrevCandle = (candledate: string) => {
         const bucketKey = getBucketKey(candledate, timeFrame);
@@ -178,7 +207,7 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
             const order = openOrder[orderId];
 
             const stoploss: StoplossType[] = order.isTrigger ? config.triggerStrategy.stoplosses : config.strategy.stoplosses;
-            const markPrice = getMarkPRice(stoploss[order.stoplossIdx + 1].target, order.side, order.entryPrice);
+            const markPrice = getMarkPRice(order.isSpecialTarget !== 0 ? order.isSpecialTarget : stoploss[order.stoplossIdx + 1].target, order.side, order.entryPrice);
 
             if ((order.side === "long" && candle.High >= markPrice) || (order.side === "short" && candle.Low <= markPrice)) {
                 // Move stoploss by update stoplossIdx
@@ -189,13 +218,24 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
                     if (config.setting.isTrigger && !order.isTrigger) {
                         // new trigger order
                         const side = getTriggerOrderSide(order, config);
+
+                        const trend5Series = getLastFiveCandle(candle.Date);
+                        const trend5 = trend5Series === "MIXED";
+
                         // const trend = getLastFiveHeikinAshiTrend(candle.Date);
+                        // const trendHeikin = (trend === "GREEN" && side === "short") || (trend === "RED" && side === "long");
+
+                        if (trend5) {
+                            createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
+                        } else if (!trend5) {
+                            createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side, isSpecialTarget: 0.8 });
+                        }
 
                         // if ((trend === "GREEN" && side === "short") || (trend === "RED" && side === "long")) {
                         // } else {
                         //     createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
                         // }
-                        createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
+                        // createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
                     }
                     // Close order
                     closeOrder(order, markPrice, candle);
@@ -221,15 +261,7 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
         }
     };
 
-    type CreateNewOrderType = {
-        candle: candleType;
-        entryPrice: number;
-        config: configType;
-        isTrigger: boolean;
-        side: "long" | "short";
-    };
-
-    const createNewOrder = ({ candle, entryPrice, config, isTrigger, side }: CreateNewOrderType) => {
+    const createNewOrder = ({ candle, entryPrice, config, isTrigger, side, isSpecialTarget = 0 }: CreateNewOrderType) => {
         const orderId = randomId();
         const qty = config.token === "SOL" ? roundQtyToNDecimal(config.value / entryPrice, 1) : config.value / entryPrice;
         openOrder[orderId] = {
@@ -241,6 +273,7 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
             side,
             stoplossIdx: 0,
             fee: BINANCE_TAKER_FEE * qty * entryPrice,
+            isSpecialTarget,
         };
 
         response[candle.Date] = { ...response[candle.Date], openOrderSide: side }; // This is not a part of logic

@@ -1,4 +1,4 @@
-import { aggregateToMap, checkIsNewCandle, getBucketKey, getDayColor, getMarkPRice, getProfit, OrderType, randomId, toHeikinAshi } from "@src/utils/backtestLogic";
+import { aggregateToMap, checkIsNewCandle, CreateNewOrderType, getBucketKey, getDayColor, getMarkPRice, getProfit, OrderType, randomId, toHeikinAshi } from "@src/utils/backtestLogic";
 import { configType, StoplossType } from "@src/component/config/customize";
 import { RecommendConfigType } from "@src/redux/configReducer";
 import { candleType } from "@src/redux/dataReducer";
@@ -408,15 +408,7 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
         }
     };
 
-    type CreateNewOrderType = {
-        candle: candleType;
-        entryPrice: number;
-        config: configType;
-        isTrigger: boolean;
-        side: "long" | "short";
-    };
-
-    const createNewOrder = ({ candle, entryPrice, config, isTrigger, side }: CreateNewOrderType) => {
+    const createNewOrder = ({ candle, entryPrice, config, isTrigger, side, isSpecialTarget = 0 }: CreateNewOrderType) => {
         const orderId = randomId();
         const qty = config.token === "SOL" ? roundQtyToNDecimal(config.value / entryPrice, 1) : config.value / entryPrice;
 
@@ -429,6 +421,7 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
             side,
             stoplossIdx: 0,
             fee: BINANCE_TAKER_FEE * qty * entryPrice,
+            isSpecialTarget,
         };
     };
 
