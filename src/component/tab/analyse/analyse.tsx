@@ -115,6 +115,10 @@ const AnalyseTab = () => {
                             <div className={`${styles.value} ${styles.sell}`}>{toUSD(overView.fee, false)}</div>
                         </div>
                         <div className={styles.row}>
+                            <div className={`${styles.title}`}>Maximum drawdown</div>
+                            <div className={`${styles.value}`}>{toUSD(overView.maxDrawdown, false)}</div>
+                        </div>
+                        <div className={styles.row}>
                             <div className={styles.title}>Highest profit</div>
                             <div className={`${styles.value} ${styles.buy}`}>{toUSD(overView.highestProfit)}</div>
                         </div>

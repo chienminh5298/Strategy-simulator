@@ -281,7 +281,9 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
 
     const closeOrder = (order: OrderType, markPrice: number, candle: candleType) => {
         if (openOrder[order.id]) {
-            const profit = getProfit({ qty: order.qty, side: order.side, markPrice, entryPrice: order.entryPrice }) - order.fee;
+            const tempProfit = getProfit({ qty: order.qty, side: order.side, markPrice, entryPrice: order.entryPrice });
+            const commission = tempProfit > 0 ? tempProfit * 0.1 : 0;
+            const profit = tempProfit - order.fee - commission; // If profit < 0 => profit = 0
             const tempOrder = { ...openOrder[order.id], markPrice, executedTime: candle.Date, profit };
             delete openOrder[order.id];
 

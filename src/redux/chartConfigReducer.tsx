@@ -20,6 +20,9 @@ const initialAnalyse = {
         shortProfit: 0,
         shortLoss: 0,
         profitPercent: 0,
+        maxDrawdown: 0,
+        highestLoss: 0,
+        highestProfit: 0,
     },
     strategyBreakDown: {
         totalPnL: 0,

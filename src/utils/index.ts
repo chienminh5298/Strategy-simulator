@@ -40,6 +40,7 @@ export type OverViewType = {
     profitPercent: number;
     highestLoss: number;
     highestProfit: number;
+    maxDrawdown: number;
 };
 
 export type ValueOverTimeChartType = {
@@ -190,6 +191,21 @@ export const processConfigDataForAnalyse = (orders: Required<OrderType>[], confi
     const longOrders = orders.filter((order) => order.side === "long");
     const shortOrders = orders.filter((order) => order.side === "short");
 
+    let maxDrawdown = 0;
+    let peak = 0;
+    let cumulative = 0;
+
+    for (const order of orders) {
+        cumulative += order.profit;
+        if (cumulative > peak) {
+            peak = cumulative;
+        }
+        const drawdown = peak - cumulative;
+        if (drawdown > maxDrawdown) {
+            maxDrawdown = drawdown;
+        }
+    }
+
     let highestLoss = 0;
     let highestProfit = 0;
     const totalPnL = orders.reduce((total, order) => {
@@ -236,6 +252,7 @@ export const processConfigDataForAnalyse = (orders: Required<OrderType>[], confi
             } else return total;
         }, 0),
         profitPercent: (totalPnL * 100) / config.value,
+        maxDrawdown: maxDrawdown,
     };
 
     let ValueOverTimeChart: ValueOverTimeChartType[] = processValueOverTimeData(orders);
