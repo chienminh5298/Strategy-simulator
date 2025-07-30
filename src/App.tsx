@@ -61,7 +61,7 @@ const App = () => {
         }
         dispatch(systemActions.updateLoading(!isFetchingData));
         if (isFetchingData) {
-            // dispatch(systemActions.showNeedHelp({ type: "customize" }));
+            dispatch(systemActions.showNeedHelp({ type: "customize" }));
         }
     }, [isError, isLoading]);
 
