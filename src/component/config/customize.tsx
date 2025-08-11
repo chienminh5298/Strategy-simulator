@@ -29,10 +29,12 @@ export type configType = {
     token: string;
     year: string;
     value: number;
+    leverage: number;
     setting: {
         timeFrame: "1h" | "4h" | "1d";
         closeOrderBeforeNewCandle: boolean;
         isTrigger: boolean;
+        compoundInterest: boolean;
     };
     strategy: {
         direction: "same" | "opposite";
@@ -221,16 +223,28 @@ const CustomizeConfig = () => {
     };
 
     // Handle select token
-    const handleSelectToken = (e: any) => {
-        setConfig((prevConfig) => ({
-            ...prevConfig,
-            token: e.target.value,
-        }));
+    const handleSelectToken = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const token = e.target.value;
+
+        setConfig((prev) => ({ ...prev, token }));
         setConfigError(undefined);
         setDataUpToDate(false);
-        if (checkDate(new Date(getLastDate(tokenData[e.target.value])))) {
-            setDataUpToDate(true);
+
+        const lastDateStr = getLastDate(tokenData[token]);
+        if (lastDateStr) {
+            if (checkDate(new Date(lastDateStr))) {
+                setDataUpToDate(true);
+            }
         }
+    };
+
+    // Handle select leverage
+    const handleSelectLeverage = (e: any) => {
+        setConfig((prevConfig) => ({
+            ...prevConfig,
+            leverage: e.target.value,
+        }));
+        setConfigError(undefined);
     };
 
     // Handle select year
@@ -380,6 +394,21 @@ const CustomizeConfig = () => {
                         }}
                     />
                 </div>
+                <div className={`${styles.leverage}`}>
+                    <header>Leverage:</header>
+                    <select className={styles.dropdown} name="leverage" value={config.leverage} onChange={handleSelectLeverage}>
+                        <option value={1}>x1</option>
+                        <option value={2}>x2</option>
+                        <option value={3}>x3</option>
+                        <option value={4}>x4</option>
+                        <option value={5}>x5</option>
+                        <option value={6}>x6</option>
+                        <option value={7}>x7</option>
+                        <option value={8}>x8</option>
+                        <option value={9}>x9</option>
+                        <option value={10}>x10</option>
+                    </select>
+                </div>
                 <div className={styles.timeFrame}>
                     <div className={styles.side}>
                         <div className={styles.direction}>Time frame:</div>
@@ -407,6 +436,17 @@ const CustomizeConfig = () => {
                                 <div className={styles.squaredOne}>
                                     <input type="checkbox" value="None" id="closeOrderBeforeNewCandle" name="closeOrderBeforeNewCandle" onChange={() => setConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, closeOrderBeforeNewCandle: !config.setting.closeOrderBeforeNewCandle } }))} checked={config.setting.closeOrderBeforeNewCandle} />
                                     <label htmlFor="closeOrderBeforeNewCandle"></label>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                    <div className={`${styles.row} ${styles.closeOrderBeforeNewCandle}`}>
+                        <header>Compound interest</header>
+                        <div className={styles.content}>
+                            <section title=".squaredOne">
+                                <div className={styles.squaredOne}>
+                                    <input type="checkbox" value="None" id="compoundInterest" name="compoundInterest" onChange={() => setConfig((prevConfig) => ({ ...prevConfig, setting: { ...prevConfig.setting, compoundInterest: !config.setting.compoundInterest } }))} checked={config.setting.compoundInterest} />
+                                    <label htmlFor="compoundInterest"></label>
                                 </div>
                             </section>
                         </div>

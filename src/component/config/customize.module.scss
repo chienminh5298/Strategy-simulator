@@ -99,7 +99,8 @@
             }
         }
         .token .row,
-        .time {
+        .time,
+        .leverage {
             .dropdown {
                 text-align: center;
                 border-radius: 3px;
@@ -108,10 +109,12 @@
                 background-color: rgb(235, 235, 235);
                 text-align: center;
                 height: 23px;
+                flex-basis: 100px;
             }
         }
         .token .row,
         .time,
+        .leverage,
         .investAmount {
             display: flex;
             justify-content: space-between;
@@ -128,6 +131,7 @@
         }
         .token,
         .time,
+        .leverage,
         .investAmount,
         .strategy,
         .setting {

@@ -27,10 +27,12 @@ const initialState: {
         token: "",
         year: "",
         value: 500,
+        leverage: 2,
         setting: {
             timeFrame: "1d",
             closeOrderBeforeNewCandle: false,
             isTrigger: true,
+            compoundInterest: true,
         },
         strategy: {
             direction: "opposite",
@@ -65,10 +67,12 @@ const initialState: {
         token: "",
         year: "",
         value: 500,
+        leverage: 1,
         setting: {
             timeFrame: "1d",
             closeOrderBeforeNewCandle: true,
             isTrigger: false,
+            compoundInterest: true,
         },
         strategy: {
             direction: "opposite",

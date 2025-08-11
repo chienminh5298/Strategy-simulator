@@ -23,7 +23,6 @@ export type dcaOpenOrderType = { id: number; entryTime: string; entryPrice: numb
 export type CreateNewOrderType = {
     candle: candleType;
     entryPrice: number;
-    config: configType;
     isTrigger: boolean;
     side: "long" | "short";
     isSpecialTarget?: number;
@@ -132,7 +131,19 @@ export const aggregateToMap = (data: { [date: string]: candleType }, timeFrame: 
     return map;
 };
 
+const specialTarget = [
+    {
+        target: 0,
+        percent: -1.5,
+    },
+    {
+        target: 0.8,
+        percent: 0.8,
+    },
+];
+
 export const backtestLogic = (data: { [date: string]: candleType }, config: configType) => {
+    let wallet = config.value;
     const timeFrame = config.setting.timeFrame;
 
     let chartData = aggregateToMap(data, timeFrame);
@@ -194,30 +205,35 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
         return chartData[sortedBucketKeysChartData[idx - 1]];
     };
 
-    const processCreateNewCandleOrder = (config: configType, candle: candleType) => {
+    const processCreateNewCandleOrder = (candle: candleType) => {
         const prevCandle = getPrevCandle(candle.Date);
         if (prevCandle) {
             const side = getNewOrderSide({ config, isTriggerOrder: false, prevCandle });
-            createNewOrder({ candle, entryPrice: candle.Open, isTrigger: false, side, config });
+            createNewOrder({ candle, entryPrice: candle.Open, isTrigger: false, side });
         }
     };
 
-    const checkHitTarget = (candle: candleType, config: configType) => {
+    const checkHitTarget = (candle: candleType) => {
         for (const orderId in openOrder) {
             const order = openOrder[orderId];
 
-            const stoploss: StoplossType[] = order.isTrigger ? config.triggerStrategy.stoplosses : config.strategy.stoplosses;
+            let stoploss: StoplossType[] = order.isTrigger ? config.triggerStrategy.stoplosses : config.strategy.stoplosses;
+            if (order.isSpecialTarget !== 0) {
+                stoploss = specialTarget;
+            }
             const markPrice = getMarkPRice(order.isSpecialTarget !== 0 ? order.isSpecialTarget : stoploss[order.stoplossIdx + 1].target, order.side, order.entryPrice);
-
             if ((order.side === "long" && candle.High >= markPrice) || (order.side === "short" && candle.Low <= markPrice)) {
                 // Move stoploss by update stoplossIdx
                 openOrder[order.id] = { ...openOrder[order.id], stoplossIdx: openOrder[order.id].stoplossIdx + 1 };
                 // Check is last target
                 if (order.stoplossIdx + 1 === stoploss.length - 1) {
+                    // Close order
+                    closeOrder(order, markPrice, candle);
+
                     // Check is strategy and trigger order is set
                     if (config.setting.isTrigger && !order.isTrigger) {
                         // new trigger order
-                        const side = getTriggerOrderSide(order, config);
+                        const side = getTriggerOrderSide(order);
 
                         const trend5Series = getLastFiveCandle(candle.Date);
                         const trend5 = trend5Series === "MIXED";
@@ -226,33 +242,28 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
                         // const trendHeikin = (trend === "GREEN" && side === "short") || (trend === "RED" && side === "long");
 
                         if (trend5) {
-                            createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
+                            createNewOrder({ candle, entryPrice: markPrice, isTrigger: true, side });
                         } else if (!trend5) {
-                            createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side, isSpecialTarget: 0.8 });
+                            createNewOrder({ candle, entryPrice: markPrice, isTrigger: true, side, isSpecialTarget: 0.8 });
                         }
-
-                        // if ((trend === "GREEN" && side === "short") || (trend === "RED" && side === "long")) {
-                        // } else {
-                        //     createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
-                        // }
-                        // createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
                     }
-                    // Close order
-                    closeOrder(order, markPrice, candle);
                 }
             }
         }
     };
 
-    const getTriggerOrderSide = (strategyOrder: OrderType, config: configType) => {
+    const getTriggerOrderSide = (strategyOrder: OrderType) => {
         if (config.triggerStrategy.direction === "same") return strategyOrder.side;
         else return strategyOrder.side === "long" ? "short" : "long";
     };
 
-    const checkHitStoploss = (candle: candleType, config: configType) => {
+    const checkHitStoploss = (candle: candleType) => {
         for (const id in openOrder) {
             const order = openOrder[id];
-            const stoploss: StoplossType[] = order.isTrigger ? config.triggerStrategy.stoplosses : config.strategy.stoplosses;
+            let stoploss: StoplossType[] = order.isTrigger ? config.triggerStrategy.stoplosses : config.strategy.stoplosses;
+            if (order.isSpecialTarget !== 0) {
+                stoploss = specialTarget;
+            }
             const markPrice = getMarkPRice(stoploss[order.stoplossIdx].percent, order.side, order.entryPrice);
             if ((order.side === "long" && candle.Low <= markPrice) || (order.side === "short" && candle.High >= markPrice)) {
                 // close order
@@ -261,9 +272,11 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
         }
     };
 
-    const createNewOrder = ({ candle, entryPrice, config, isTrigger, side, isSpecialTarget = 0 }: CreateNewOrderType) => {
+    const createNewOrder = ({ candle, entryPrice, isTrigger, side, isSpecialTarget = 0 }: CreateNewOrderType) => {
         const orderId = randomId();
-        const qty = config.token === "SOL" ? roundQtyToNDecimal(config.value / entryPrice, 1) : config.value / entryPrice;
+
+        const budget = config.setting.compoundInterest ? wallet : config.value;
+        const qty = config.token === "SOL" ? roundQtyToNDecimal(budget / entryPrice, 0.4) * config.leverage : (budget / entryPrice) * config.leverage;
         openOrder[orderId] = {
             id: orderId,
             entryTime: candle.Date,
@@ -282,9 +295,10 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
     const closeOrder = (order: OrderType, markPrice: number, candle: candleType) => {
         if (openOrder[order.id]) {
             const tempProfit = getProfit({ qty: order.qty, side: order.side, markPrice, entryPrice: order.entryPrice });
-            const commission = tempProfit > 0 ? tempProfit * 0.1 : 0;
-            const profit = tempProfit - order.fee - commission; // If profit < 0 => profit = 0
-            const tempOrder = { ...openOrder[order.id], markPrice, executedTime: candle.Date, profit };
+            order.fee += BINANCE_TAKER_FEE * order.qty * markPrice;
+            const profit = tempProfit - order.fee;
+            wallet += profit;
+            const tempOrder = { ...openOrder[order.id], markPrice, executedTime: candle.Date, profit, fee: order.fee };
             delete openOrder[order.id];
 
             response[candle.Date] = { ...response[candle.Date], executedOrder: [tempOrder] }; // This is not a part of logic
@@ -296,8 +310,8 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
         const candle = dataValues[i];
         response[candle.Date] = { candle }; // This is not a part of logic
 
-        checkHitStoploss(candle, config);
-        checkHitTarget(candle, config);
+        checkHitStoploss(candle);
+        checkHitTarget(candle);
 
         if (checkIsNewCandle(candle.Date, timeFrame)) {
             // Check if exsist open order
@@ -312,21 +326,21 @@ export const backtestLogic = (data: { [date: string]: candleType }, config: conf
                     }
 
                     // Create new order
-                    processCreateNewCandleOrder(config, candle);
+                    processCreateNewCandleOrder(candle);
 
                     // Check hit stoploss for new oder just opned (In case hit stoploss at first candle of the day)
-                    checkHitStoploss(candle, config);
-                    checkHitTarget(candle, config);
+                    checkHitStoploss(candle);
+                    checkHitTarget(candle);
                 } else {
                     // If order keep over night => Do nothing, let order keep running
                 }
             } else {
                 // Create new order
-                processCreateNewCandleOrder(config, candle);
+                processCreateNewCandleOrder(candle);
 
                 // Check hit stoploss for new oder just opned (In case hit stoploss at first candle of the day)
-                checkHitStoploss(candle, config);
-                checkHitTarget(candle, config);
+                checkHitStoploss(candle);
+                checkHitTarget(candle);
             }
         }
     }

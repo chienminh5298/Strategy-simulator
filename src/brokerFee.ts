@@ -1,1 +1,1 @@
-export const BINANCE_TAKER_FEE = 0.0005 // 0.05%;
+export const BINANCE_TAKER_FEE = 0.0006 // 0.05%;

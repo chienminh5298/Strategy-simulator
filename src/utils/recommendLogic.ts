@@ -132,10 +132,12 @@ function crossoverConfig(a: configType, b: configType): configType {
         token: a.token,
         year: a.year,
         value: a.value,
+        leverage: 1,
         setting: {
             timeFrame: a.setting.timeFrame,
             closeOrderBeforeNewCandle: Math.random() < 0.5 ? a.setting.closeOrderBeforeNewCandle : b.setting.closeOrderBeforeNewCandle,
             isTrigger: Math.random() < 0.5 ? a.setting.isTrigger : b.setting.isTrigger,
+            compoundInterest: true,
         },
         strategy: {
             direction: Math.random() < 0.5 ? a.strategy.direction : b.strategy.direction,
@@ -288,10 +290,12 @@ function randomConfig(rcConfig: RecommendConfigType): configType {
         token: rcConfig.token,
         year: rcConfig.year,
         value: rcConfig.value,
+        leverage: 1,
         setting: {
             timeFrame: rcConfig.setting.timeFrame,
             closeOrderBeforeNewCandle: randomPick(keepOverNightOptions),
             isTrigger: randomPick(isTriggerOptions),
+            compoundInterest: true,
         },
         strategy: {
             direction: randomPick(directionOptions) as "same" | "opposite",
@@ -304,8 +308,8 @@ function randomConfig(rcConfig: RecommendConfigType): configType {
     };
 }
 
-const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
-    const timeFrame = rcConfig.setting.timeFrame;
+const simulate = ({ data, rcConfig: config }: GetStoplossValueType) => {
+    const timeFrame = config.setting.timeFrame;
     let chartData = aggregateToMap(data, timeFrame);
 
     const sortedBucketKeysChartData = Object.keys(chartData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
@@ -346,15 +350,15 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
         return chartData[sortedBucketKeysChartData[idx - 1]];
     };
 
-    const processCreateNewMidNightOrder = (config: configType, candle: candleType) => {
+    const processCreateNewMidNightOrder = (candle: candleType) => {
         const prevCandle = getPrevCandle(candle.Date);
         if (prevCandle) {
-            const side = getNewOrderSide(getDayColor(prevCandle), rcConfig.strategy.direction);
-            createNewOrder({ candle, entryPrice: candle.Open, isTrigger: false, side, config });
+            const side = getNewOrderSide(getDayColor(prevCandle), config.strategy.direction);
+            createNewOrder({ candle, entryPrice: candle.Open, isTrigger: false, side });
         }
     };
 
-    const checkHitTarget = (candle: candleType, config: configType) => {
+    const checkHitTarget = (candle: candleType) => {
         for (const orderId in openOrder) {
             const order = openOrder[orderId];
 
@@ -374,13 +378,13 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
 
                         if (config.setting.isTrigger) {
                             // new trigger order
-                            const side = getTriggerOrderSide(order, config);
+                            const side = getTriggerOrderSide(order);
                             // const trend = getLastFiveHeikinAshiTrend(candle.Date);
                             // if ((trend === "GREEN" && side === "short") || (trend === "RED" && side === "long")) {
                             // } else {
                             //     createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
                             // }
-                            createNewOrder({ candle, entryPrice: markPrice, config, isTrigger: true, side });
+                            createNewOrder({ candle, entryPrice: markPrice, isTrigger: true, side });
                         }
                     } else {
                         closeOrder(order, markPrice, candle);
@@ -391,12 +395,12 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
         }
     };
 
-    const getTriggerOrderSide = (strategyOrder: OrderType, config: configType) => {
+    const getTriggerOrderSide = (strategyOrder: OrderType) => {
         if (config.triggerStrategy.direction === "same") return strategyOrder.side;
         else return strategyOrder.side === "long" ? "short" : "long";
     };
 
-    const checkHitStoploss = (candle: candleType, config: configType) => {
+    const checkHitStoploss = (candle: candleType) => {
         for (const id in openOrder) {
             const order = openOrder[id];
             const stoploss: StoplossType[] = order.isTrigger ? config.triggerStrategy.stoplosses : config.strategy.stoplosses;
@@ -408,7 +412,7 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
         }
     };
 
-    const createNewOrder = ({ candle, entryPrice, config, isTrigger, side, isSpecialTarget = 0 }: CreateNewOrderType) => {
+    const createNewOrder = ({ candle, entryPrice, isTrigger, side, isSpecialTarget = 0 }: CreateNewOrderType) => {
         const orderId = randomId();
         const qty = config.token === "SOL" ? roundQtyToNDecimal(config.value / entryPrice, 1) : config.value / entryPrice;
 
@@ -427,6 +431,7 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
 
     const closeOrder = (order: OrderType, markPrice: number, candle: candleType) => {
         if (openOrder[order.id]) {
+            order.fee += BINANCE_TAKER_FEE * order.qty * markPrice;
             const profit = getProfit({ qty: order.qty, side: order.side, markPrice, entryPrice: order.entryPrice }) - order.fee;
             sum += profit;
             delete openOrder[order.id];
@@ -437,14 +442,14 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
     for (let i = 481; i < dataKey.length; i++) {
         const candle = dataValues[i];
 
-        checkHitStoploss(candle, rcConfig);
-        checkHitTarget(candle, rcConfig);
+        checkHitStoploss(candle);
+        checkHitTarget(candle);
 
-        if (checkIsNewCandle(candle.Date, rcConfig.setting.timeFrame)) {
+        if (checkIsNewCandle(candle.Date, config.setting.timeFrame)) {
             // Check if exsist open order
             if (Object.keys(openOrder).length > 0) {
                 // Check setting is order not keep over night
-                if (!rcConfig.setting.closeOrderBeforeNewCandle) {
+                if (!config.setting.closeOrderBeforeNewCandle) {
                     // Close all order
                     for (const orderId in openOrder) {
                         const order = openOrder[orderId];
@@ -453,21 +458,21 @@ const simulate = ({ data, rcConfig }: GetStoplossValueType) => {
                     }
 
                     // Create new order
-                    processCreateNewMidNightOrder(rcConfig, candle);
+                    processCreateNewMidNightOrder(candle);
 
                     // Check hit stoploss for new oder just opned (In case hit stoploss at first candle of the day)
-                    checkHitStoploss(candle, rcConfig);
-                    checkHitTarget(candle, rcConfig);
+                    checkHitStoploss(candle);
+                    checkHitTarget(candle);
                 } else {
                     // If order keep over night => Do nothing, let order keep running
                 }
             } else {
                 // Create new order
-                processCreateNewMidNightOrder(rcConfig, candle);
+                processCreateNewMidNightOrder(candle);
 
                 // Check hit stoploss for new oder just opned (In case hit stoploss at first candle of the day)
-                checkHitStoploss(candle, rcConfig);
-                checkHitTarget(candle, rcConfig);
+                checkHitStoploss(candle);
+                checkHitTarget(candle);
             }
         }
     }

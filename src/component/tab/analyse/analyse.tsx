@@ -67,6 +67,10 @@ const AnalyseTab = () => {
                             <div className={styles.value}>{config.year}</div>
                         </div>
                         <div className={styles.row}>
+                            <div className={styles.title}>Leverage</div>
+                            <div className={styles.value}>{config.leverage}x</div>
+                        </div>
+                        <div className={styles.row}>
                             <div className={styles.title}>Close position before new candle opens?</div>
                             <div className={`${styles.value} ${config.setting.closeOrderBeforeNewCandle ? styles.buy : styles.sell}`}>{config.setting.closeOrderBeforeNewCandle ? "YES" : "NO"}</div>
                         </div>

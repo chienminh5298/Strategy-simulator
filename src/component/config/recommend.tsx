@@ -66,15 +66,21 @@ const RecommendConfig = () => {
     });
 
     // Handle select token
-    const handleSelectToken = (e: any) => {
+    const handleSelectToken = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const token = e.target.value;
+
         setRecommendConfig((prevConfig) => ({
             ...prevConfig,
             token: e.target.value,
         }));
         setConfigError(undefined);
         setDataUpToDate(false);
-        if (checkDate(new Date(getLastDate(tokenData[e.target.value])))) {
-            setDataUpToDate(true);
+
+        const lastDateStr = getLastDate(tokenData[token]);
+        if (lastDateStr) {
+            if (checkDate(new Date(lastDateStr))) {
+                setDataUpToDate(true);
+            }
         }
     };
 
